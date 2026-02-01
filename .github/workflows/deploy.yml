@@ -1,0 +1,106 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
+jobs:
+  # Deploy Backend to Railway/Render
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Option 1: Deploy to Railway
+      - name: Deploy to Railway
+        if: ${{ vars.DEPLOY_TARGET == 'railway' }}
+        uses: bervProject/railway-deploy@main
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: backend
+
+      # Option 2: Deploy to Render
+      - name: Deploy to Render
+        if: ${{ vars.DEPLOY_TARGET == 'render' }}
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+      # Option 3: Deploy to Fly.io
+      - name: Deploy to Fly.io
+        if: ${{ vars.DEPLOY_TARGET == 'fly' }}
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        if: ${{ vars.DEPLOY_TARGET == 'fly' }}
+        working-directory: backend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  # Deploy Frontend to Vercel
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+          working-directory: frontend
+
+  # Run database migrations
+  run-migrations:
+    name: Run Migrations
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          pip install alembic psycopg2-binary sqlalchemy
+
+      - name: Run migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          alembic upgrade head
+
+  # Notify on completion
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend, run-migrations]
+    if: always()
+
+    steps:
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
