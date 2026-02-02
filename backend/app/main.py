@@ -36,6 +36,15 @@ async def lifespan(app: FastAPI):
         },
     )
 
+    # Auto-create database tables on startup
+    try:
+        from app.core.database import engine, Base
+        from app.models import *  # noqa: F401, F403
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables verified/created")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {e}")
+
     # Initialize Sentry if configured
     if settings.SENTRY_DSN:
         try:
