@@ -39,8 +39,10 @@ async def lifespan(app: FastAPI):
     # Auto-create database tables on startup
     try:
         from app.core.database import engine, Base, SessionLocal
-        from app.models import *  # noqa: F401, F403
-        from app.models.book import Book
+        from app.models.user import User
+        from app.models.book import Book, BookEdition, BookTag
+        from app.models.rating import Rating, Shelf
+        from app.models.similarity import UserSimilarity
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables verified/created")
 
