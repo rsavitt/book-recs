@@ -1,11 +1,159 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.core.database import get_db
 from app.schemas.recommendation import RecommendationResponse, RecommendationFilters
 from app.services import auth_service, recommendation_service
+from app.models.book import Book, BookTag
+from app.models.rating import Rating
 
 router = APIRouter()
+
+
+@router.get("/popular", response_model=list[RecommendationResponse])
+async def get_popular_books(
+    db: Session = Depends(get_db),
+    limit: int = Query(20, le=50),
+):
+    """
+    Get popular Romantasy books (no login required).
+
+    Returns highly-rated books that are good starting points.
+    """
+    # Get books with highest average ratings (minimum 1 rating for seeded data)
+    popular = (
+        db.query(Book)
+        .filter(Book.is_romantasy == True)
+        .order_by(Book.romantasy_confidence.desc(), Book.publication_year.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        RecommendationResponse(
+            book_id=book.id,
+            title=book.title,
+            author=book.author,
+            cover_url=book.cover_url,
+            spice_level=book.spice_level,
+            is_ya=book.is_ya,
+            score=book.romantasy_confidence or 0.9,
+            reason="Popular in the Romantasy community",
+        )
+        for book in popular
+    ]
+
+
+@router.post("/quick", response_model=list[RecommendationResponse])
+async def get_quick_recommendations(
+    liked_book_ids: list[int] = Body(..., embed=True),
+    db: Session = Depends(get_db),
+    limit: int = Query(20, le=50),
+):
+    """
+    Get quick recommendations based on selected favorite books (no login required).
+
+    Select a few books you love and get instant recommendations.
+    """
+    if not liked_book_ids:
+        return []
+
+    # Get the liked books
+    liked_books = db.query(Book).filter(Book.id.in_(liked_book_ids)).all()
+    if not liked_books:
+        return []
+
+    # Collect authors and series from liked books
+    liked_authors = {b.author_normalized for b in liked_books}
+    liked_series = {b.series_name for b in liked_books if b.series_name}
+
+    # Get tags from liked books
+    liked_tag_ids = set()
+    for book in liked_books:
+        for tag in book.tags:
+            liked_tag_ids.add(tag.id)
+
+    # Find similar books:
+    # 1. Same series (different books)
+    # 2. Same author (different books)
+    # 3. Similar tropes/tags
+    recommendations = []
+    seen_ids = set(liked_book_ids)
+
+    # Same series, different books
+    if liked_series:
+        series_books = (
+            db.query(Book)
+            .filter(
+                Book.series_name.in_(liked_series),
+                Book.id.notin_(seen_ids),
+                Book.is_romantasy == True,
+            )
+            .order_by(Book.series_position)
+            .limit(10)
+            .all()
+        )
+        for book in series_books:
+            if book.id not in seen_ids:
+                recommendations.append((book, 0.95, f"More from the {book.series_name} series"))
+                seen_ids.add(book.id)
+
+    # Same author, different books
+    author_books = (
+        db.query(Book)
+        .filter(
+            Book.author_normalized.in_(liked_authors),
+            Book.id.notin_(seen_ids),
+            Book.is_romantasy == True,
+        )
+        .limit(10)
+        .all()
+    )
+    for book in author_books:
+        if book.id not in seen_ids:
+            recommendations.append((book, 0.9, f"More from {book.author}"))
+            seen_ids.add(book.id)
+
+    # Similar tags - find books with overlapping tags
+    if liked_tag_ids:
+        from sqlalchemy import func
+        from app.models.book import book_tag_association
+
+        similar_books = (
+            db.query(Book, func.count(book_tag_association.c.tag_id).label('tag_count'))
+            .join(book_tag_association, Book.id == book_tag_association.c.book_id)
+            .filter(
+                book_tag_association.c.tag_id.in_(liked_tag_ids),
+                Book.id.notin_(seen_ids),
+                Book.is_romantasy == True,
+            )
+            .group_by(Book.id)
+            .order_by(func.count(book_tag_association.c.tag_id).desc())
+            .limit(20)
+            .all()
+        )
+        for book, tag_count in similar_books:
+            if book.id not in seen_ids:
+                recommendations.append((book, 0.7 + (tag_count * 0.05), "Similar vibes to books you like"))
+                seen_ids.add(book.id)
+
+    # Sort by score and limit
+    recommendations.sort(key=lambda x: x[1], reverse=True)
+
+    return [
+        RecommendationResponse(
+            book_id=book.id,
+            title=book.title,
+            author=book.author,
+            cover_url=book.cover_url,
+            spice_level=book.spice_level,
+            is_ya=book.is_ya,
+            score=score,
+            reason=reason,
+        )
+        for book, score, reason in recommendations[:limit]
+    ]
 
 
 @router.get("/", response_model=list[RecommendationResponse])

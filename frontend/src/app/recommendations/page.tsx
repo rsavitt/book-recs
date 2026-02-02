@@ -1,21 +1,28 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { Header } from "@/components/Header";
 import { RecommendationCard } from "@/components/RecommendationCard";
-import type { Recommendation, BookTag } from "@/types";
+import { BookCard } from "@/components/BookCard";
+import type { Recommendation, BookTag, BookSearchResult } from "@/types";
 
 type SpiceFilter = "any" | 0 | 1 | 2 | 3 | 4 | 5;
 type AgeFilter = "any" | "ya" | "adult";
+type ViewMode = "popular" | "quick" | "personalized";
 
 export default function RecommendationsPage() {
-  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("popular");
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Quick preferences
+  const [popularBooks, setPopularBooks] = useState<BookSearchResult[]>([]);
+  const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
+  const [showBookPicker, setShowBookPicker] = useState(false);
 
   // Filters
   const [spiceFilter, setSpiceFilter] = useState<SpiceFilter>("any");
@@ -30,23 +37,49 @@ export default function RecommendationsPage() {
 
   useEffect(() => {
     const token = api.getToken();
-    if (!token) {
-      router.push("/login");
-      return;
+    setIsLoggedIn(!!token);
+
+    if (token) {
+      setViewMode("personalized");
+    } else {
+      setViewMode("popular");
+      loadPopularBooks();
     }
+
     loadTropes();
-  }, [router]);
+  }, []);
 
   const loadTropes = async () => {
     try {
       const tropes = await api.getTags("trope");
       setAvailableTropes(tropes);
     } catch {
-      // Tropes are optional, continue without them
+      // Tropes are optional
     }
   };
 
-  const loadRecommendations = useCallback(async () => {
+  const loadPopularBooks = async () => {
+    setLoading(true);
+    try {
+      const popular = await api.getPopularBooks(30);
+      setRecommendations(popular);
+      // Also store as book search results for the picker
+      setPopularBooks(popular.map(p => ({
+        id: p.book_id,
+        title: p.title,
+        author: p.author,
+        cover_url: p.cover_url,
+        spice_level: p.spice_level,
+        is_ya: p.is_ya,
+      })));
+    } catch {
+      setError("Failed to load popular books");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPersonalizedRecommendations = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -78,34 +111,66 @@ export default function RecommendationsPage() {
       setRecommendations(recs);
     } catch (err) {
       if (err instanceof Error && err.message.includes("401")) {
-        router.push("/login");
+        setIsLoggedIn(false);
+        setViewMode("popular");
+        loadPopularBooks();
         return;
       }
       setError("Failed to load recommendations. Try importing more books for better results.");
     } finally {
       setLoading(false);
     }
-  }, [spiceFilter, ageFilter, selectedTropes, excludedTropes, router]);
+  }, [spiceFilter, ageFilter, selectedTropes, excludedTropes]);
+
+  const loadQuickRecommendations = async () => {
+    if (selectedBookIds.length === 0) {
+      setError("Please select at least one book you like");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setShowBookPicker(false);
+
+    try {
+      const recs = await api.getQuickRecommendations(selectedBookIds, 30);
+      setRecommendations(recs);
+      setViewMode("quick");
+    } catch {
+      setError("Failed to load recommendations");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const token = api.getToken();
-    if (token) {
-      loadRecommendations();
+    if (viewMode === "personalized" && isLoggedIn) {
+      loadPersonalizedRecommendations();
     }
-  }, [loadRecommendations]);
+  }, [viewMode, isLoggedIn, loadPersonalizedRecommendations]);
 
   const handleFeedback = async (
     bookId: number,
     feedback: "interested" | "not_interested" | "already_read"
   ) => {
+    if (!isLoggedIn) return;
+
     try {
       await api.submitFeedback(bookId, feedback);
       if (feedback === "not_interested" || feedback === "already_read") {
         setDismissedIds((prev) => new Set([...prev, bookId]));
       }
     } catch {
-      // Silent fail for feedback
+      // Silent fail
     }
+  };
+
+  const toggleBookSelection = (bookId: number) => {
+    setSelectedBookIds(prev =>
+      prev.includes(bookId)
+        ? prev.filter(id => id !== bookId)
+        : [...prev, bookId]
+    );
   };
 
   const toggleTrope = (slug: string, list: "include" | "exclude") => {
@@ -151,25 +216,140 @@ export default function RecommendationsPage() {
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Your Recommendations</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {viewMode === "personalized"
+                ? "Your Recommendations"
+                : viewMode === "quick"
+                ? "Quick Recommendations"
+                : "Popular Romantasy Books"}
+            </h1>
             <p className="text-gray-600 mt-1">
-              Books loved by readers with similar taste
+              {viewMode === "personalized"
+                ? "Books loved by readers with similar taste"
+                : viewMode === "quick"
+                ? "Based on books you selected"
+                : "Start discovering great reads"}
             </p>
           </div>
 
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            <span>Filters</span>
-            {hasActiveFilters && (
-              <span className="w-2 h-2 bg-purple-600 rounded-full" />
+          <div className="flex gap-2">
+            {viewMode === "personalized" && (
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                <span>Filters</span>
+                {hasActiveFilters && (
+                  <span className="w-2 h-2 bg-purple-600 rounded-full" />
+                )}
+              </button>
             )}
-          </button>
+          </div>
         </div>
 
-        {/* Filters panel */}
-        {showFilters && (
+        {/* Anonymous user actions */}
+        {!isLoggedIn && (
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-gray-900">Get Better Recommendations</h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  Select books you love for quick recs, or sign up for personalized recommendations
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowBookPicker(true)}
+                  className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium"
+                >
+                  Pick Favorites
+                </button>
+                <Link
+                  href="/register"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                >
+                  Sign Up Free
+                </Link>
+              </div>
+            </div>
+
+            {/* Book picker */}
+            {showBookPicker && (
+              <div className="mt-6 border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-medium text-gray-900">
+                    Select books you love ({selectedBookIds.length} selected)
+                  </h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowBookPicker(false)}
+                      className="px-3 py-1.5 text-gray-600 hover:text-gray-900"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={loadQuickRecommendations}
+                      disabled={selectedBookIds.length === 0}
+                      className="px-4 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Get Recommendations
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                  {popularBooks.map((book) => (
+                    <button
+                      key={book.id}
+                      onClick={() => toggleBookSelection(book.id)}
+                      className={`relative rounded-lg overflow-hidden transition-all ${
+                        selectedBookIds.includes(book.id)
+                          ? "ring-4 ring-purple-500 scale-105"
+                          : "hover:scale-105"
+                      }`}
+                    >
+                      {book.cover_url ? (
+                        <img
+                          src={book.cover_url}
+                          alt={book.title}
+                          className="w-full aspect-[2/3] object-cover"
+                        />
+                      ) : (
+                        <div className="w-full aspect-[2/3] bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center p-2">
+                          <span className="text-white text-xs text-center font-medium">
+                            {book.title}
+                          </span>
+                        </div>
+                      )}
+                      {selectedBookIds.includes(book.id) && (
+                        <div className="absolute inset-0 bg-purple-600/20 flex items-center justify-center">
+                          <span className="text-2xl">✓</span>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* View mode tabs for anonymous users with quick recs */}
+        {!isLoggedIn && viewMode === "quick" && (
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => {
+                setViewMode("popular");
+                loadPopularBooks();
+              }}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              ← Back to Popular
+            </button>
+          </div>
+        )}
+
+        {/* Filters panel (logged in only) */}
+        {showFilters && isLoggedIn && (
           <div className="bg-white rounded-xl shadow p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900">Filter Recommendations</h2>
@@ -298,9 +478,11 @@ export default function RecommendationsPage() {
             <p className="text-gray-600 mb-6">
               {hasActiveFilters
                 ? "Try adjusting your filters to see more books."
-                : "Import your Goodreads library or rate more books to get personalized recommendations."}
+                : isLoggedIn
+                ? "Import your Goodreads library or rate more books to get personalized recommendations."
+                : "Select some books you like to get recommendations!"}
             </p>
-            {!hasActiveFilters && (
+            {!hasActiveFilters && isLoggedIn && (
               <Link
                 href="/onboarding"
                 className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
@@ -312,7 +494,7 @@ export default function RecommendationsPage() {
         ) : (
           <>
             <p className="text-sm text-gray-500 mb-4">
-              Showing {filteredRecs.length} recommendation{filteredRecs.length !== 1 ? "s" : ""}
+              Showing {filteredRecs.length} {viewMode === "popular" ? "popular book" : "recommendation"}{filteredRecs.length !== 1 ? "s" : ""}
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -320,9 +502,8 @@ export default function RecommendationsPage() {
                 <RecommendationCard
                   key={rec.book_id}
                   recommendation={rec}
-                  onFeedback={(feedback) => {
-                    handleFeedback(rec.book_id, feedback);
-                  }}
+                  onFeedback={isLoggedIn ? (feedback) => handleFeedback(rec.book_id, feedback) : undefined}
+                  showFeedback={isLoggedIn}
                 />
               ))}
             </div>

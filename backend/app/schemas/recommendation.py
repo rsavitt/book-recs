@@ -20,22 +20,26 @@ class RecommendationResponse(BaseModel):
     book_id: int
     title: str
     author: str
-    cover_url: str | None
-    publication_year: int | None
+    cover_url: str | None = None
+    publication_year: int | None = None
 
     # Series info
-    series_name: str | None
-    series_position: float | None
+    series_name: str | None = None
+    series_position: float | None = None
 
     # Romantasy metadata
-    spice_level: int | None
-    is_ya: bool | None
-    tags: list[str]  # Just tag names for display
+    spice_level: int | None = None
+    is_ya: bool | None = None
+    tags: list[str] = []  # Just tag names for display
 
-    # Recommendation data
-    predicted_rating: float  # Predicted rating for this user
-    confidence: float  # How confident we are (based on overlap)
-    explanation: RecommendationExplanation
+    # Recommendation data (for personalized recs)
+    predicted_rating: float | None = None  # Predicted rating for this user
+    confidence: float | None = None  # How confident we are (based on overlap)
+    explanation: RecommendationExplanation | None = None
+
+    # For popular/quick recommendations
+    score: float | None = None  # Match score (0-1)
+    reason: str | None = None  # Why this was recommended
 
     class Config:
         from_attributes = True

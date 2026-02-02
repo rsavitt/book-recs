@@ -197,6 +197,18 @@ class ApiClient {
     return this.request<Recommendation[]>(`/recommendations/?${searchParams}`);
   }
 
+  // Anonymous recommendations (no login required)
+  async getPopularBooks(limit = 20): Promise<Recommendation[]> {
+    return this.request<Recommendation[]>(`/recommendations/popular?limit=${limit}`);
+  }
+
+  async getQuickRecommendations(likedBookIds: number[], limit = 20): Promise<Recommendation[]> {
+    return this.request<Recommendation[]>(`/recommendations/quick?limit=${limit}`, {
+      method: "POST",
+      body: JSON.stringify({ liked_book_ids: likedBookIds }),
+    });
+  }
+
   async submitFeedback(bookId: number, feedback: "interested" | "not_interested" | "already_read"): Promise<void> {
     await this.request(`/recommendations/${bookId}/feedback?feedback=${feedback}`, {
       method: "POST",

@@ -8,9 +8,10 @@ import type { Recommendation } from "@/types";
 interface RecommendationCardProps {
   recommendation: Recommendation;
   onFeedback?: (feedback: "interested" | "not_interested" | "already_read") => void;
+  showFeedback?: boolean;
 }
 
-export function RecommendationCard({ recommendation, onFeedback }: RecommendationCardProps) {
+export function RecommendationCard({ recommendation, onFeedback, showFeedback = true }: RecommendationCardProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<string | null>(null);
 
@@ -30,6 +31,11 @@ export function RecommendationCard({ recommendation, onFeedback }: Recommendatio
     setShowExplanation(!showExplanation);
   };
 
+  // Check if we have full recommendation data or simple data
+  const hasFullData = recommendation.predicted_rating !== undefined || recommendation.explanation !== undefined;
+  const hasTags = recommendation.tags && recommendation.tags.length > 0;
+  const hasExplanation = recommendation.explanation !== undefined;
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow group relative">
       <Link href={`/book/${recommendation.book_id}`}>
@@ -44,18 +50,24 @@ export function RecommendationCard({ recommendation, onFeedback }: Recommendatio
               sizes="(max-width: 768px) 50vw, 200px"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-              <span className="text-4xl">📚</span>
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-400 to-pink-400">
+              <span className="text-white text-xs text-center p-2 font-medium">
+                {recommendation.title}
+              </span>
             </div>
           )}
 
-          {/* Predicted rating badge */}
-          <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium">
-            {recommendation.predicted_rating.toFixed(1)}★
-          </div>
+          {/* Score/Rating badge */}
+          {(recommendation.predicted_rating || recommendation.score) && (
+            <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium">
+              {recommendation.predicted_rating
+                ? `${recommendation.predicted_rating.toFixed(1)}★`
+                : `${Math.round((recommendation.score || 0) * 100)}%`}
+            </div>
+          )}
 
           {/* Spice level badge */}
-          {recommendation.spice_level !== null && recommendation.spice_level > 0 && (
+          {recommendation.spice_level !== null && recommendation.spice_level !== undefined && recommendation.spice_level > 0 && (
             <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs">
               {"🌶️".repeat(Math.min(recommendation.spice_level, 3))}
               {recommendation.spice_level > 3 && "+"}
@@ -80,10 +92,17 @@ export function RecommendationCard({ recommendation, onFeedback }: Recommendatio
             </p>
           )}
 
+          {/* Reason (for quick/popular recs) */}
+          {recommendation.reason && !hasExplanation && (
+            <p className="text-xs text-purple-600 mt-2 italic">
+              {recommendation.reason}
+            </p>
+          )}
+
           {/* Tags */}
-          {recommendation.tags.length > 0 && (
+          {hasTags && (
             <div className="flex flex-wrap gap-1 mt-2">
-              {recommendation.tags.slice(0, 2).map((tag) => (
+              {recommendation.tags!.slice(0, 2).map((tag) => (
                 <span
                   key={tag}
                   className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded"
@@ -91,27 +110,29 @@ export function RecommendationCard({ recommendation, onFeedback }: Recommendatio
                   {tag}
                 </span>
               ))}
-              {recommendation.tags.length > 2 && (
+              {recommendation.tags!.length > 2 && (
                 <span className="px-1.5 py-0.5 text-gray-500 text-xs">
-                  +{recommendation.tags.length - 2}
+                  +{recommendation.tags!.length - 2}
                 </span>
               )}
             </div>
           )}
 
-          {/* Why this book button */}
-          <button
-            onClick={toggleExplanation}
-            className="mt-2 text-xs text-purple-600 hover:text-purple-500 flex items-center gap-1"
-          >
-            <span>Why this book?</span>
-            <span>{showExplanation ? "▲" : "▼"}</span>
-          </button>
+          {/* Why this book button (only for personalized recs) */}
+          {hasExplanation && (
+            <button
+              onClick={toggleExplanation}
+              className="mt-2 text-xs text-purple-600 hover:text-purple-500 flex items-center gap-1"
+            >
+              <span>Why this book?</span>
+              <span>{showExplanation ? "▲" : "▼"}</span>
+            </button>
+          )}
         </div>
       </Link>
 
       {/* Explanation panel */}
-      {showExplanation && (
+      {showExplanation && hasExplanation && recommendation.explanation && (
         <div className="px-3 pb-3 border-t border-gray-100 mt-2 pt-2">
           <p className="text-xs text-gray-600 italic">
             {recommendation.explanation.sample_explanation}
@@ -130,8 +151,8 @@ export function RecommendationCard({ recommendation, onFeedback }: Recommendatio
         </div>
       )}
 
-      {/* Feedback buttons */}
-      {onFeedback && !feedbackGiven && (
+      {/* Feedback buttons (only for logged in users) */}
+      {showFeedback && onFeedback && !feedbackGiven && (
         <div className="px-3 pb-3 flex gap-2">
           <button
             onClick={(e) => handleFeedback(e, "interested")}

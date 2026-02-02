@@ -75,15 +75,19 @@ export interface Recommendation {
   title: string;
   author: string;
   cover_url: string | null;
-  publication_year: number | null;
-  series_name: string | null;
-  series_position: number | null;
+  publication_year?: number | null;
+  series_name?: string | null;
+  series_position?: number | null;
   spice_level: number | null;
   is_ya: boolean | null;
-  tags: string[];
-  predicted_rating: number;
-  confidence: number;
-  explanation: RecommendationExplanation;
+  tags?: string[];
+  // For personalized recommendations
+  predicted_rating?: number;
+  confidence?: number;
+  explanation?: RecommendationExplanation;
+  // For popular/quick recommendations
+  score?: number;
+  reason?: string;
 }
 
 export interface RecommendationExplanation {
