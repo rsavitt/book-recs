@@ -97,28 +97,25 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add middleware (order matters - first added is last executed)
-# Security headers
-app.add_middleware(SecurityHeadersMiddleware)
-
-# Rate limiting (in production)
-if settings.ENVIRONMENT == "production":
-    app.add_middleware(
-        RateLimitMiddleware,
-        requests_per_minute=settings.RATE_LIMIT_REQUESTS_PER_MINUTE,
-    )
-
-# Request logging
-app.add_middleware(RequestLoggingMiddleware)
-
-# CORS middleware
+# CORS middleware - must be added first (outermost)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Add other middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+
+# Rate limiting disabled for now - can cause CORS issues
+# if settings.ENVIRONMENT == "production":
+#     app.add_middleware(
+#         RateLimitMiddleware,
+#         requests_per_minute=settings.RATE_LIMIT_REQUESTS_PER_MINUTE,
+#     )
 
 
 @app.get("/health")
