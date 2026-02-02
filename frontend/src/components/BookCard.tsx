@@ -60,7 +60,7 @@ export function BookCard({ book, showExplanation = false, onFeedback }: BookCard
               </div>
             )}
 
-            {recommendation.tags.length > 0 && (
+            {recommendation.tags && recommendation.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {recommendation.tags.slice(0, 3).map((tag) => (
                   <span
