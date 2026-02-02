@@ -204,7 +204,7 @@ class GoogleBooksClient:
     BASE_URL = "https://www.googleapis.com/books/v1"
 
     def __init__(self):
-        self.api_key = settings.google_books_api_key
+        self.api_key = settings.GOOGLE_BOOKS_API_KEY
         self.client = httpx.AsyncClient(
             base_url=self.BASE_URL,
             timeout=10.0,

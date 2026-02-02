@@ -55,9 +55,9 @@ class SimilarityComputer:
         max_neighbors: int | None = None,
     ):
         self.db = db
-        self.min_overlap = min_overlap or settings.min_overlap_for_similarity
-        self.shrinkage_factor = shrinkage_factor or settings.similarity_shrinkage_factor
-        self.max_neighbors = max_neighbors or settings.max_neighbors_per_user
+        self.min_overlap = min_overlap or settings.MIN_OVERLAP_FOR_SIMILARITY
+        self.shrinkage_factor = shrinkage_factor or settings.SIMILARITY_SHRINKAGE_FACTOR
+        self.max_neighbors = max_neighbors or settings.MAX_NEIGHBORS_PER_USER
 
     def compute_for_user(self, user_id: int) -> list[SimilarityResult]:
         """
@@ -237,9 +237,9 @@ class BatchSimilarityComputer:
         max_neighbors: int | None = None,
     ):
         self.db = db
-        self.min_overlap = min_overlap or settings.min_overlap_for_similarity
-        self.shrinkage_factor = shrinkage_factor or settings.similarity_shrinkage_factor
-        self.max_neighbors = max_neighbors or settings.max_neighbors_per_user
+        self.min_overlap = min_overlap or settings.MIN_OVERLAP_FOR_SIMILARITY
+        self.shrinkage_factor = shrinkage_factor or settings.SIMILARITY_SHRINKAGE_FACTOR
+        self.max_neighbors = max_neighbors or settings.MAX_NEIGHBORS_PER_USER
 
     def compute_all(self, progress_callback=None) -> dict:
         """
