@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { api } from "@/lib/api";
 import { FileUpload } from "@/components/FileUpload";
 
@@ -43,11 +44,11 @@ export default function OnboardingPage() {
   const handleImport = async (file: File) => {
     setError(null);
     try {
-      const result = await api.importGoodreads(file);
+      await api.importGoodreads(file);
       // Move to preferences after import starts
       setStep("preferences");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Import failed");
     }
   };
 
@@ -86,7 +87,7 @@ export default function OnboardingPage() {
       );
       const books = await response.json();
       setStarterBooks(books);
-    } catch (err) {
+    } catch {
       setError("Failed to load books");
     } finally {
       setLoading(false);
@@ -121,7 +122,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({ ratings: ratingsList }),
       });
       setStep("complete");
-    } catch (err) {
+    } catch {
       setError("Failed to save ratings");
     } finally {
       setLoading(false);
@@ -264,12 +265,14 @@ export default function OnboardingPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {starterBooks.map((book) => (
                   <div key={book.id} className="bg-white rounded-lg shadow p-3">
-                    <div className="aspect-[2/3] bg-gray-100 rounded mb-2 flex items-center justify-center">
+                    <div className="aspect-[2/3] bg-gray-100 rounded mb-2 flex items-center justify-center relative">
                       {book.cover_url ? (
-                        <img
+                        <Image
                           src={book.cover_url}
                           alt={book.title}
-                          className="w-full h-full object-cover rounded"
+                          fill
+                          className="object-cover rounded"
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                         />
                       ) : (
                         <span className="text-3xl">📚</span>

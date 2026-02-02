@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -17,11 +17,7 @@ export default function ProfilePage() {
   const [allowDataForRecs, setAllowDataForRecs] = useState(true);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       const data = await api.getProfile();
       setProfile(data);
@@ -35,7 +31,11 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleSavePrivacy = async () => {
     setSavingPrivacy(true);
@@ -51,7 +51,7 @@ export default function ProfilePage() {
           allow_data_for_recs: allowDataForRecs,
         }),
       });
-    } catch (err) {
+    } catch {
       setError("Failed to save privacy settings");
     } finally {
       setSavingPrivacy(false);
@@ -73,7 +73,7 @@ export default function ProfilePage() {
       a.download = `${profile?.username || "user"}_data_export.json`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       setError("Failed to export data");
     }
   };

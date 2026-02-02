@@ -82,7 +82,7 @@ export default function BrowsePage() {
       }
 
       setHasMore(results.length === LIMIT);
-    } catch (err) {
+    } catch {
       setError("Failed to load books");
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ export default function BrowsePage() {
   // Load on filter change
   useEffect(() => {
     loadBooks(true);
-  }, [spiceFilter, ageFilter, selectedTropes]);
+  }, [spiceFilter, ageFilter, selectedTropes, loadBooks]);
 
   const toggleTrope = (slug: string) => {
     if (selectedTropes.includes(slug)) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -12,16 +12,7 @@ export default function SimilarReadersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const token = api.getToken();
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    loadSimilarUsers();
-  }, [router]);
-
-  const loadSimilarUsers = async () => {
+  const loadSimilarUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -37,7 +28,16 @@ export default function SimilarReadersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const token = api.getToken();
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    loadSimilarUsers();
+  }, [router, loadSimilarUsers]);
 
   const formatSimilarity = (score: number) => {
     return `${Math.round(score * 100)}%`;

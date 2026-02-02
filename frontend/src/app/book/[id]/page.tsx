@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,25 +23,25 @@ export default function BookDetailPage() {
     setIsLoggedIn(!!api.getToken());
   }, []);
 
-  useEffect(() => {
-    if (bookId) {
-      loadBook();
-    }
-  }, [bookId]);
-
-  const loadBook = async () => {
+  const loadBook = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       const data = await api.getBook(parseInt(bookId));
       setBook(data);
-    } catch (err) {
+    } catch {
       setError("Failed to load book details");
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId]);
+
+  useEffect(() => {
+    if (bookId) {
+      loadBook();
+    }
+  }, [bookId, loadBook]);
 
   const handleFeedback = async (feedback: "interested" | "not_interested" | "already_read") => {
     try {

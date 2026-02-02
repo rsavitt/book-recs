@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { api } from "@/lib/api";
 import { Header } from "@/components/Header";
 import { RecommendationCard } from "@/components/RecommendationCard";
-import { BookCard } from "@/components/BookCard";
 import type { Recommendation, BookTag, BookSearchResult } from "@/types";
 
 type SpiceFilter = "any" | 0 | 1 | 2 | 3 | 4 | 5;
@@ -310,11 +310,15 @@ export default function RecommendationsPage() {
                       }`}
                     >
                       {book.cover_url ? (
-                        <img
-                          src={book.cover_url}
-                          alt={book.title}
-                          className="w-full aspect-[2/3] object-cover"
-                        />
+                        <div className="relative w-full aspect-[2/3]">
+                          <Image
+                            src={book.cover_url}
+                            alt={book.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 12.5vw"
+                          />
+                        </div>
                       ) : (
                         <div className="w-full aspect-[2/3] bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center p-2">
                           <span className="text-white text-xs text-center font-medium">
