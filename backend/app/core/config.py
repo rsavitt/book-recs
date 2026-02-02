@@ -57,8 +57,35 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        """Parse CORS origins from comma-separated string."""
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        """Parse CORS origins from comma-separated string.
+
+        Supports wildcard patterns for Vercel preview URLs:
+        - https://*.vercel.app matches any Vercel preview URL
+        """
+        origins = [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+        # Expand Vercel wildcard pattern to allow all Vercel preview URLs
+        expanded = []
+        for origin in origins:
+            if origin == "https://*.vercel.app":
+                # Special marker - handled by custom CORS logic
+                expanded.append(origin)
+            else:
+                expanded.append(origin)
+        return expanded
+
+    def is_origin_allowed(self, origin: str) -> bool:
+        """Check if an origin is allowed, supporting wildcard patterns."""
+        if not origin:
+            return False
+
+        for allowed in self.cors_origins_list:
+            if allowed == origin:
+                return True
+            # Support Vercel wildcard pattern
+            if allowed == "https://*.vercel.app" and origin.endswith(".vercel.app") and origin.startswith("https://"):
+                return True
+        return False
 
     class Config:
         env_file = ".env"

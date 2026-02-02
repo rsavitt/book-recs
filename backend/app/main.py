@@ -98,13 +98,33 @@ app = FastAPI(
 )
 
 # CORS middleware - must be added first (outermost)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-)
+# Check if any wildcard patterns are used
+has_wildcard = any("*" in origin for origin in settings.cors_origins_list)
+
+if has_wildcard:
+    # Use allow_origin_regex for wildcard support
+    # This regex matches the explicit origins plus any *.vercel.app URL
+    import re
+    explicit_origins = [re.escape(o) for o in settings.cors_origins_list if "*" not in o]
+    # Build regex: explicit origins OR any vercel.app subdomain
+    origin_patterns = explicit_origins + [r"https://[a-zA-Z0-9-]+\.vercel\.app"]
+    origin_regex = "^(" + "|".join(origin_patterns) + ")$"
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=origin_regex,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
 
 # Add other middleware
 app.add_middleware(SecurityHeadersMiddleware)
