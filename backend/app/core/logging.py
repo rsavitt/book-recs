@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any
 from contextvars import ContextVar
 
-from app.core.config import settings
+from app.core.config import get_settings
 
 # Context variable for request ID
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
@@ -40,7 +40,7 @@ class JSONFormatter(logging.Formatter):
             log_data.update(record.extra_fields)
 
         # Add location info in development
-        if settings.ENVIRONMENT == "development":
+        if get_settings().ENVIRONMENT == "development":
             log_data["location"] = {
                 "file": record.pathname,
                 "line": record.lineno,
@@ -76,6 +76,8 @@ class DevelopmentFormatter(logging.Formatter):
 
 def setup_logging() -> None:
     """Configure logging based on environment."""
+    settings = get_settings()
+
     # Determine log level
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
 
