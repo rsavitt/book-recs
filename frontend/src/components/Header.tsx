@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 
 interface HeaderProps {
@@ -10,7 +11,12 @@ interface HeaderProps {
 
 export function Header({ showAuthButtons = true }: HeaderProps) {
   const pathname = usePathname();
-  const isLoggedIn = typeof window !== "undefined" && api.getToken();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check auth status after hydration to avoid SSR mismatch
+  useEffect(() => {
+    setIsLoggedIn(!!api.getToken());
+  }, []);
 
   const isActive = (path: string) => pathname === path;
 

@@ -13,6 +13,7 @@ export default function BrowsePage() {
   const [books, setBooks] = useState<BookSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Filters
   const [spiceFilter, setSpiceFilter] = useState<SpiceFilter>("any");
@@ -25,6 +26,11 @@ export default function BrowsePage() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 24;
+
+  // Check auth status after hydration to avoid SSR mismatch
+  useEffect(() => {
+    setIsLoggedIn(!!api.getToken());
+  }, []);
 
   useEffect(() => {
     loadTropes();
@@ -115,7 +121,7 @@ export default function BrowsePage() {
             <span className="font-semibold text-xl text-gray-900">Romantasy Recs</span>
           </Link>
           <div className="flex items-center gap-4">
-            {api.getToken() ? (
+            {isLoggedIn ? (
               <>
                 <Link href="/recommendations" className="text-gray-600 hover:text-gray-900">
                   My Recs
@@ -314,7 +320,7 @@ export default function BrowsePage() {
         )}
 
         {/* Sign up CTA for non-logged-in users */}
-        {!api.getToken() && books.length > 0 && (
+        {!isLoggedIn && books.length > 0 && (
           <div className="mt-12 bg-purple-50 rounded-xl p-8 text-center">
             <h2 className="text-xl font-bold text-gray-900 mb-2">
               Want Personalized Recommendations?

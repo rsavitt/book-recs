@@ -14,8 +14,14 @@ export default function BookDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [feedbackSent, setFeedbackSent] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const bookId = params.id as string;
+
+  // Check auth status after hydration to avoid SSR mismatch
+  useEffect(() => {
+    setIsLoggedIn(!!api.getToken());
+  }, []);
 
   useEffect(() => {
     if (bookId) {
@@ -200,7 +206,7 @@ export default function BookDetailPage() {
               )}
 
               {/* Feedback buttons */}
-              {api.getToken() && (
+              {isLoggedIn && (
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   {feedbackSent ? (
                     <div className="flex items-center gap-2 text-green-600">
