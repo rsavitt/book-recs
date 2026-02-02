@@ -55,6 +55,15 @@ class Settings(BaseSettings):
     # Sentry (error tracking)
     SENTRY_DSN: str = ""
 
+    # Reddit API
+    REDDIT_CLIENT_ID: str = ""
+    REDDIT_CLIENT_SECRET: str = ""
+    REDDIT_USER_AGENT: str = "romantasy-recs/1.0"
+
+    # Reddit integration weights (for future recommendation integration)
+    REDDIT_SENTIMENT_BOOST: float = 0.05  # 5% rating boost for high sentiment
+    REDDIT_MIN_MENTIONS_FOR_SIGNAL: int = 3  # Minimum mentions to trust data
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Parse CORS origins from comma-separated string.

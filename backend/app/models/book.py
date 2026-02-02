@@ -63,6 +63,21 @@ class Book(Base):
     tags: Mapped[list["BookTag"]] = relationship(secondary=book_tag_association, back_populates="books")
     ratings: Mapped[list["Rating"]] = relationship(back_populates="book", cascade="all, delete-orphan")
 
+    # Reddit-sourced data relationships
+    reddit_metrics: Mapped["BookRedditMetrics | None"] = relationship(
+        back_populates="book", cascade="all, delete-orphan", uselist=False
+    )
+    recommendation_edges_as_source: Mapped[list["BookRecommendationEdge"]] = relationship(
+        foreign_keys="BookRecommendationEdge.source_book_id",
+        back_populates="source_book",
+        cascade="all, delete-orphan",
+    )
+    recommendation_edges_as_target: Mapped[list["BookRecommendationEdge"]] = relationship(
+        foreign_keys="BookRecommendationEdge.target_book_id",
+        back_populates="target_book",
+        cascade="all, delete-orphan",
+    )
+
 
 class BookEdition(Base):
     """Different editions of the same book (hardcover, paperback, different ISBNs)."""
@@ -111,5 +126,6 @@ class BookTag(Base):
     books: Mapped[list["Book"]] = relationship(secondary=book_tag_association, back_populates="tags")
 
 
-# Forward reference
+# Forward references
 from app.models.rating import Rating  # noqa: E402
+from app.models.reddit import BookRedditMetrics, BookRecommendationEdge  # noqa: E402

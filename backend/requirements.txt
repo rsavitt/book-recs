@@ -42,3 +42,7 @@ sentry-sdk[fastapi]==1.40.0
 
 # Utilities
 python-dotenv==1.0.1
+
+# Reddit data collection
+praw>=7.7.0
+rapidfuzz>=3.0.0
