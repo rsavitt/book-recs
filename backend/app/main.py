@@ -21,6 +21,10 @@ settings = get_settings()
 setup_logging()
 logger = get_logger(__name__)
 
+# Debug: Log CORS settings on startup
+logger.info(f"CORS_ORIGINS env: {settings.CORS_ORIGINS}")
+logger.info(f"CORS origins list: {settings.cors_origins_list}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
