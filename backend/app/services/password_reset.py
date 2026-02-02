@@ -38,7 +38,7 @@ def create_password_reset_token(email: str) -> str:
         "type": "password_reset",
         "jti": secrets.token_hex(16),  # Unique token ID
     }
-    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
 def verify_password_reset_token(token: str) -> str | None:
@@ -52,7 +52,7 @@ def verify_password_reset_token(token: str) -> str | None:
         Email address if valid, None otherwise
     """
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
         # Verify it's a password reset token
         if payload.get("type") != "password_reset":
