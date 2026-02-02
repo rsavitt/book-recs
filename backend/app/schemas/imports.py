@@ -10,6 +10,7 @@ class ImportStatus(BaseModel):
     books_processed: int | None = None
     books_total: int | None = None
     errors: list[str] | None = None
+    source: str | None = None  # "goodreads", "storygraph", or "unknown"
 
 
 class ImportResult(BaseModel):

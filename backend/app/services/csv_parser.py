@@ -12,6 +12,32 @@ from datetime import date
 from typing import Iterator
 
 
+# Maximum field lengths to prevent memory exhaustion
+MAX_TITLE_LENGTH = 500
+MAX_AUTHOR_LENGTH = 255
+MAX_REVIEW_LENGTH = 50000
+MAX_SHELF_LENGTH = 100
+
+
+def sanitize_formula_injection(value: str) -> str:
+    """
+    Sanitize a string to prevent CSV/formula injection.
+
+    Excel and other spreadsheet programs interpret cells starting with
+    =, +, -, @, \t, or \r as formulas, which could execute arbitrary commands.
+    """
+    if value and value[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
+
+def truncate_field(value: str, max_length: int) -> str:
+    """Truncate a field to maximum length."""
+    if len(value) > max_length:
+        return value[:max_length]
+    return value
+
+
 @dataclass
 class ParsedBook:
     """A single book entry parsed from a Goodreads CSV export."""
@@ -153,19 +179,25 @@ class GoodreadsCSVParser:
         if not book_id:
             return None
 
-        # Parse title and extract series info
+        # Parse title and extract series info (with sanitization)
         raw_title = row.get("Title", "").strip()
+        raw_title = sanitize_formula_injection(raw_title)
+        raw_title = truncate_field(raw_title, MAX_TITLE_LENGTH)
         title, series_name, series_position = self._parse_title(raw_title)
 
-        # Parse author
+        # Parse author (with sanitization)
         author = row.get("Author", "").strip()
         if not author:
             return None
+        author = sanitize_formula_injection(author)
+        author = truncate_field(author, MAX_AUTHOR_LENGTH)
 
-        # Parse additional authors
+        # Parse additional authors (with sanitization)
         additional_authors_str = row.get("Additional Authors", "")
         additional_authors = [
-            a.strip() for a in additional_authors_str.split(",") if a.strip()
+            truncate_field(sanitize_formula_injection(a.strip()), MAX_AUTHOR_LENGTH)
+            for a in additional_authors_str.split(",")
+            if a.strip()
         ]
 
         # Parse ISBNs (Goodreads wraps them in ="..." to preserve leading zeros)
@@ -179,9 +211,13 @@ class GoodreadsCSVParser:
         date_read = self._parse_date(row.get("Date Read", ""))
         date_added = self._parse_date(row.get("Date Added", ""))
 
-        # Parse shelves
+        # Parse shelves (with sanitization)
         shelves_str = row.get("Bookshelves", "")
-        shelves = [s.strip() for s in shelves_str.split(",") if s.strip()]
+        shelves = [
+            truncate_field(sanitize_formula_injection(s.strip()), MAX_SHELF_LENGTH)
+            for s in shelves_str.split(",")
+            if s.strip()
+        ]
 
         return ParsedBook(
             goodreads_book_id=book_id,
@@ -202,12 +238,20 @@ class GoodreadsCSVParser:
             date_added=date_added,
             shelves=shelves,
             exclusive_shelf=row.get("Exclusive Shelf", "").strip() or None,
-            review=row.get("My Review", "").strip() or None,
+            review=self._sanitize_review(row.get("My Review", "")),
             spoiler=row.get("Spoiler", "").strip().lower() == "true",
             private_notes=row.get("Private Notes", "").strip() or None,
             series_name=series_name,
             series_position=series_position,
         )
+
+    def _sanitize_review(self, review: str) -> str | None:
+        """Sanitize and truncate review field."""
+        review = review.strip()
+        if not review:
+            return None
+        review = sanitize_formula_injection(review)
+        return truncate_field(review, MAX_REVIEW_LENGTH)
 
     def _parse_title(self, raw_title: str) -> tuple[str, str | None, float | None]:
         """
@@ -329,3 +373,87 @@ def parse_goodreads_csv(content: bytes) -> tuple[list[ParsedBook], list[str], li
 
     books = list(parser.parse())
     return books, parser.errors, parser.warnings
+
+
+def detect_csv_source(content: bytes) -> str:
+    """
+    Detect whether a CSV file is from Goodreads or StoryGraph.
+
+    Args:
+        content: Raw bytes of the CSV file
+
+    Returns:
+        "goodreads", "storygraph", or "unknown"
+    """
+    # Try to decode the content
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        try:
+            text = content.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            text = content.decode("latin-1")
+
+    # Read just the headers
+    reader = csv.DictReader(io.StringIO(text))
+    if reader.fieldnames is None:
+        return "unknown"
+
+    headers = set(reader.fieldnames)
+
+    # Goodreads-specific headers
+    goodreads_indicators = {"Book Id", "My Rating", "Exclusive Shelf", "Bookshelves"}
+
+    # StoryGraph-specific headers
+    storygraph_indicators = {"Read Status", "Star Rating", "ISBN/UID", "Moods", "Pace"}
+
+    has_goodreads = bool(headers & goodreads_indicators)
+    has_storygraph = bool(headers & storygraph_indicators)
+
+    if has_goodreads and not has_storygraph:
+        return "goodreads"
+    elif has_storygraph and not has_goodreads:
+        return "storygraph"
+    elif has_goodreads and has_storygraph:
+        # Unlikely, but prefer Goodreads if both match
+        return "goodreads"
+    else:
+        return "unknown"
+
+
+def parse_library_csv(
+    content: bytes,
+) -> tuple[list[ParsedBook], str, list[str], list[str]]:
+    """
+    Parse a library CSV export, auto-detecting the source.
+
+    Supports both Goodreads and StoryGraph exports.
+
+    Args:
+        content: Raw bytes of the CSV file
+
+    Returns:
+        Tuple of (books, source, errors, warnings)
+        where source is "goodreads", "storygraph", or "unknown"
+    """
+    source = detect_csv_source(content)
+
+    if source == "goodreads":
+        parser = GoodreadsCSVParser(content)
+        if not parser.validate():
+            return [], source, parser.errors, parser.warnings
+        books = list(parser.parse())
+        return books, source, parser.errors, parser.warnings
+
+    elif source == "storygraph":
+        # Import here to avoid circular imports
+        from app.services.storygraph_parser import StoryGraphCSVParser
+
+        parser = StoryGraphCSVParser(content)
+        if not parser.validate():
+            return [], source, parser.errors, parser.warnings
+        books = list(parser.parse())
+        return books, source, parser.errors, parser.warnings
+
+    else:
+        return [], source, ["Unable to detect CSV format. Please upload a Goodreads or StoryGraph export."], []

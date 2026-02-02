@@ -22,7 +22,7 @@ from app.models.book import Book
 from app.models.rating import Rating, Shelf
 from app.models.user import User
 from app.schemas.imports import ImportStatus, ImportResult
-from app.services.csv_parser import GoodreadsCSVParser, ParsedBook
+from app.services.csv_parser import GoodreadsCSVParser, ParsedBook, parse_library_csv
 from app.services.book_dedup import BookDeduplicator, DeduplicationResult
 from app.services.external_apis import MetadataEnricher
 
@@ -33,17 +33,18 @@ _import_status: dict[str, dict] = {}
 
 def validate_and_create_import(db: Session, user_id: int, content: bytes) -> str:
     """
-    Validate the uploaded file is a Goodreads export and create an import job.
+    Validate the uploaded file is a valid library export and create an import job.
+
+    Supports both Goodreads and StoryGraph CSV exports.
 
     Returns the import_id for tracking.
     """
-    parser = GoodreadsCSVParser(content)
+    # Use unified parser with auto-detection
+    books, source, errors, warnings = parse_library_csv(content)
 
-    if not parser.validate():
-        raise ValueError("; ".join(parser.errors))
+    if errors:
+        raise ValueError("; ".join(errors))
 
-    # Count books for progress tracking
-    books = list(parser.parse())
     total_books = len(books)
 
     if total_books == 0:
@@ -63,6 +64,8 @@ def validate_and_create_import(db: Session, user_id: int, content: bytes) -> str
         "books_skipped": 0,
         "new_books_added": 0,
         "errors": [],
+        "warnings": warnings,
+        "source": source,  # Track detected source
         "started_at": datetime.utcnow(),
     }
 
@@ -71,7 +74,7 @@ def validate_and_create_import(db: Session, user_id: int, content: bytes) -> str
 
 def process_import(import_id: str, user_id: int, content: bytes) -> None:
     """
-    Process the Goodreads CSV import.
+    Process a library CSV import (Goodreads or StoryGraph).
 
     This runs as a background task.
     """
@@ -79,20 +82,20 @@ def process_import(import_id: str, user_id: int, content: bytes) -> None:
     _import_status[import_id]["status"] = "processing"
     _import_status[import_id]["message"] = "Parsing CSV..."
 
-    # Parse CSV
-    parser = GoodreadsCSVParser(content)
-    if not parser.validate():
+    # Parse CSV with auto-detection
+    books, source, errors, warnings = parse_library_csv(content)
+    if errors:
         _import_status[import_id]["status"] = "failed"
-        _import_status[import_id]["errors"] = parser.errors
+        _import_status[import_id]["errors"] = errors
         return
 
-    books = list(parser.parse())
-    _import_status[import_id]["warnings"] = parser.warnings
+    _import_status[import_id]["warnings"] = warnings
+    _import_status[import_id]["source"] = source
 
     # Process books
     db = SessionLocal()
     try:
-        _process_books(db, import_id, user_id, books)
+        _process_books(db, import_id, user_id, books, source)
 
         # Update user's last import time
         user = db.query(User).filter(User.id == user_id).first()
@@ -118,6 +121,7 @@ def _process_books(
     import_id: str,
     user_id: int,
     books: list[ParsedBook],
+    source: str = "goodreads",
 ) -> None:
     """Process all books from the import."""
     deduplicator = BookDeduplicator(db)
@@ -125,7 +129,7 @@ def _process_books(
 
     for i, parsed in enumerate(books):
         try:
-            _process_single_book(db, deduplicator, user_id, parsed, import_id)
+            _process_single_book(db, deduplicator, user_id, parsed, import_id, source)
 
             # Update progress
             _import_status[import_id]["books_processed"] = i + 1
@@ -152,6 +156,7 @@ def _process_single_book(
     user_id: int,
     parsed: ParsedBook,
     import_id: str,
+    source: str = "goodreads",
 ) -> None:
     """Process a single book from the import."""
     # Deduplicate and get/create book record
@@ -162,11 +167,11 @@ def _process_single_book(
 
     # Create or update rating (only if rated)
     if parsed.rating > 0:
-        _create_or_update_rating(db, user_id, result.book.id, parsed)
+        _create_or_update_rating(db, user_id, result.book.id, parsed, source)
         _import_status[import_id]["books_imported"] += 1
-    elif parsed.exclusive_shelf in ("read", "currently-reading", "to-read"):
+    elif parsed.exclusive_shelf in ("read", "currently-reading", "to-read", "did-not-finish"):
         # Track unrated but shelved books
-        _create_or_update_rating(db, user_id, result.book.id, parsed)
+        _create_or_update_rating(db, user_id, result.book.id, parsed, source)
         _import_status[import_id]["books_imported"] += 1
     else:
         _import_status[import_id]["books_skipped"] += 1
@@ -180,6 +185,7 @@ def _create_or_update_rating(
     user_id: int,
     book_id: int,
     parsed: ParsedBook,
+    source: str = "goodreads",
 ) -> Rating:
     """Create or update a rating record."""
     # Check for existing rating
@@ -205,7 +211,7 @@ def _create_or_update_rating(
         rating=parsed.rating,
         date_read=parsed.date_read,
         date_added=parsed.date_added,
-        source="goodreads_import",
+        source=f"{source}_import",
     )
     db.add(rating)
     return rating
@@ -281,6 +287,7 @@ def get_import_status(db: Session, import_id: str, user_id: int) -> ImportStatus
         books_processed=status.get("books_processed"),
         books_total=status.get("books_total"),
         errors=status.get("errors") if status.get("errors") else None,
+        source=status.get("source"),
     )
 
 
