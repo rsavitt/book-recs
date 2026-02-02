@@ -38,12 +38,23 @@ async def lifespan(app: FastAPI):
 
     # Auto-create database tables on startup
     try:
-        from app.core.database import engine, Base
+        from app.core.database import engine, Base, SessionLocal
         from app.models import *  # noqa: F401, F403
+        from app.models.book import Book
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables verified/created")
+
+        # Auto-seed if no books exist
+        db = SessionLocal()
+        book_count = db.query(Book).count()
+        db.close()
+        if book_count == 0:
+            logger.info("No books found, running seed script...")
+            from scripts.seed_books import seed_books
+            seed_books()
+            logger.info("Seed complete!")
     except Exception as e:
-        logger.error(f"Failed to create database tables: {e}")
+        logger.error(f"Failed to initialize database: {e}")
 
     # Initialize Sentry if configured
     if settings.SENTRY_DSN:
