@@ -14,8 +14,12 @@ export function Header({ showAuthButtons = true }: HeaderProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check auth status after hydration to avoid SSR mismatch
+  // This pattern is intentional - we read client-side localStorage after mount
+  // to prevent hydration errors from server/client state differences
   useEffect(() => {
-    setIsLoggedIn(!!api.getToken());
+    const token = api.getToken();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLoggedIn(!!token);
   }, []);
 
   const isActive = (path: string) => pathname === path;

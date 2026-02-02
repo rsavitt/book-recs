@@ -32,7 +32,6 @@ export function RecommendationCard({ recommendation, onFeedback, showFeedback = 
   };
 
   // Check if we have full recommendation data or simple data
-  const hasFullData = recommendation.predicted_rating !== undefined || recommendation.explanation !== undefined;
   const hasTags = recommendation.tags && recommendation.tags.length > 0;
   const hasExplanation = recommendation.explanation !== undefined;
 
