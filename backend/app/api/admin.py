@@ -14,7 +14,8 @@ import urllib.request
 import unicodedata
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, BackgroundTasks, Query
+from fastapi import APIRouter, Depends, BackgroundTasks, Query, Body
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -31,6 +32,316 @@ from app.models.rating import Rating
 
 router = APIRouter()
 
+
+# ============== Bulk Upload Models ==============
+
+class BulkBookData(BaseModel):
+    title: str
+    author: str
+    goodreads_id: str | None = None
+    isbn_13: str | None = None
+    isbn_10: str | None = None
+    description: str | None = None
+    cover_url: str | None = None
+    page_count: int | None = None
+    publication_year: int | None = None
+    series_name: str | None = None
+    series_position: float | None = None
+    is_romantasy: bool = True
+    romantasy_confidence: float = 0.5
+    spice_level: int | None = None
+    is_ya: bool | None = None
+    tags: list[str] | None = None
+
+
+class BulkUserData(BaseModel):
+    external_id: str  # For mapping ratings later
+    username: str | None = None
+    spice_preference: int | None = None
+
+
+class BulkRatingData(BaseModel):
+    external_user_id: str  # Maps to BulkUserData.external_id
+    goodreads_book_id: str | None = None  # Maps to book by goodreads_id
+    book_title: str | None = None  # Or match by title
+    book_author: str | None = None  # And author
+    rating: int  # 1-5
+
+
+class BulkUploadResponse(BaseModel):
+    status: str
+    created: int
+    skipped: int
+    errors: list[str]
+
+
+# ============== Bulk Upload Endpoints ==============
+
+@router.post("/bulk/books", response_model=BulkUploadResponse)
+async def bulk_upload_books(
+    books: list[BulkBookData] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Bulk upload books to the database.
+
+    Skips books that already exist (matched by goodreads_id, isbn, or title+author).
+    """
+    created = 0
+    skipped = 0
+    errors = []
+
+    for book_data in books:
+        try:
+            # Check for existing book
+            existing = None
+
+            if book_data.goodreads_id:
+                existing = db.query(BookEdition).filter(
+                    BookEdition.goodreads_book_id == book_data.goodreads_id
+                ).first()
+
+            if not existing and book_data.isbn_13:
+                existing = db.query(Book).filter(Book.isbn_13 == book_data.isbn_13).first()
+
+            if not existing:
+                # Check by normalized title + author
+                author_norm = unicodedata.normalize('NFKD', book_data.author)
+                author_norm = ''.join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+
+                existing = db.query(Book).filter(
+                    Book.title == book_data.title,
+                    Book.author_normalized == author_norm
+                ).first()
+
+            if existing:
+                skipped += 1
+                continue
+
+            # Create book
+            author_norm = unicodedata.normalize('NFKD', book_data.author)
+            author_norm = ''.join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+
+            book = Book(
+                title=book_data.title[:500],
+                author=book_data.author[:255],
+                author_normalized=author_norm[:255],
+                description=book_data.description[:5000] if book_data.description else None,
+                cover_url=book_data.cover_url,
+                page_count=book_data.page_count,
+                publication_year=book_data.publication_year,
+                series_name=book_data.series_name[:255] if book_data.series_name else None,
+                series_position=book_data.series_position,
+                is_romantasy=book_data.is_romantasy,
+                romantasy_confidence=book_data.romantasy_confidence,
+                spice_level=book_data.spice_level,
+                is_ya=book_data.is_ya,
+                isbn_13=book_data.isbn_13[:13] if book_data.isbn_13 else None,
+                isbn_10=book_data.isbn_10[:10] if book_data.isbn_10 else None,
+            )
+            db.add(book)
+            db.flush()
+
+            # Create edition with goodreads_id if provided
+            if book_data.goodreads_id:
+                edition = BookEdition(
+                    book_id=book.id,
+                    goodreads_book_id=book_data.goodreads_id,
+                )
+                db.add(edition)
+
+            # Add tags
+            if book_data.tags:
+                for tag_name in book_data.tags:
+                    slug = tag_name.lower().replace(" ", "-")
+                    tag = db.query(BookTag).filter(BookTag.slug == slug).first()
+                    if not tag:
+                        tag = BookTag(
+                            name=tag_name.replace("-", " ").title(),
+                            slug=slug,
+                            category="trope",
+                            is_romantasy_indicator=True,
+                        )
+                        db.add(tag)
+                        db.flush()
+                    if tag not in book.tags:
+                        book.tags.append(tag)
+
+            created += 1
+
+            # Commit in batches
+            if created % 100 == 0:
+                db.commit()
+
+        except Exception as e:
+            errors.append(f"Error with '{book_data.title}': {str(e)}")
+
+    db.commit()
+
+    return BulkUploadResponse(
+        status="success",
+        created=created,
+        skipped=skipped,
+        errors=errors[:10],  # Limit error messages
+    )
+
+
+@router.post("/bulk/users", response_model=BulkUploadResponse)
+async def bulk_upload_users(
+    users: list[BulkUserData] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Bulk upload synthetic users for rating data.
+
+    Creates users with BULK_IMPORT_NO_LOGIN password (can't log in).
+    The external_id is stored in the username for later rating mapping.
+    """
+    created = 0
+    skipped = 0
+    errors = []
+
+    for user_data in users:
+        try:
+            # Generate username from external_id
+            user_hash = hashlib.md5(user_data.external_id.encode()).hexdigest()[:8]
+            username = user_data.username or f"bulk_{user_hash}"
+
+            # Check if exists
+            existing = db.query(User).filter(User.username == username).first()
+            if existing:
+                skipped += 1
+                continue
+
+            user = User(
+                email=f"{username}@bulk.imported",
+                username=username,
+                hashed_password="BULK_IMPORT_NO_LOGIN",
+                display_name=f"Reader {user_hash[:4].upper()}",
+                is_public=True,
+                allow_data_for_recs=True,
+                spice_preference=user_data.spice_preference,
+            )
+            db.add(user)
+            created += 1
+
+            if created % 500 == 0:
+                db.commit()
+
+        except Exception as e:
+            errors.append(f"Error with user '{user_data.external_id}': {str(e)}")
+
+    db.commit()
+
+    return BulkUploadResponse(
+        status="success",
+        created=created,
+        skipped=skipped,
+        errors=errors[:10],
+    )
+
+
+@router.post("/bulk/ratings", response_model=BulkUploadResponse)
+async def bulk_upload_ratings(
+    ratings: list[BulkRatingData] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Bulk upload ratings.
+
+    Matches users by external_id hash and books by goodreads_id or title+author.
+    """
+    created = 0
+    skipped = 0
+    errors = []
+
+    # Cache for lookups
+    user_cache: dict[str, int] = {}
+    book_cache: dict[str, int] = {}
+
+    for rating_data in ratings:
+        try:
+            # Get user ID
+            if rating_data.external_user_id not in user_cache:
+                user_hash = hashlib.md5(rating_data.external_user_id.encode()).hexdigest()[:8]
+                username = f"bulk_{user_hash}"
+                user = db.query(User).filter(User.username == username).first()
+                if user:
+                    user_cache[rating_data.external_user_id] = user.id
+                else:
+                    skipped += 1
+                    continue
+
+            user_id = user_cache[rating_data.external_user_id]
+
+            # Get book ID
+            book_id = None
+            cache_key = rating_data.goodreads_book_id or f"{rating_data.book_title}|{rating_data.book_author}"
+
+            if cache_key in book_cache:
+                book_id = book_cache[cache_key]
+            else:
+                if rating_data.goodreads_book_id:
+                    edition = db.query(BookEdition).filter(
+                        BookEdition.goodreads_book_id == rating_data.goodreads_book_id
+                    ).first()
+                    if edition:
+                        book_id = edition.book_id
+
+                if not book_id and rating_data.book_title and rating_data.book_author:
+                    author_norm = unicodedata.normalize('NFKD', rating_data.book_author)
+                    author_norm = ''.join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+
+                    book = db.query(Book).filter(
+                        Book.title == rating_data.book_title,
+                        Book.author_normalized == author_norm
+                    ).first()
+                    if book:
+                        book_id = book.id
+
+                if book_id:
+                    book_cache[cache_key] = book_id
+
+            if not book_id:
+                skipped += 1
+                continue
+
+            # Check for existing rating
+            existing = db.query(Rating).filter(
+                Rating.user_id == user_id,
+                Rating.book_id == book_id
+            ).first()
+            if existing:
+                skipped += 1
+                continue
+
+            # Create rating
+            rating = Rating(
+                user_id=user_id,
+                book_id=book_id,
+                rating=max(1, min(5, rating_data.rating)),
+                source="bulk_import",
+            )
+            db.add(rating)
+            created += 1
+
+            if created % 1000 == 0:
+                db.commit()
+
+        except Exception as e:
+            errors.append(f"Error with rating: {str(e)}")
+
+    db.commit()
+
+    return BulkUploadResponse(
+        status="success",
+        created=created,
+        skipped=skipped,
+        errors=errors[:10],
+    )
+
+
+# ============== Stats & Classification ==============
 
 @router.get("/stats")
 async def get_stats(db: Session = Depends(get_db)):
