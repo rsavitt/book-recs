@@ -69,8 +69,10 @@ export default function RecommendationsPage() {
         title: p.title,
         author: p.author,
         cover_url: p.cover_url,
-        spice_level: p.spice_level,
-        is_ya: p.is_ya,
+        publication_year: p.publication_year ?? null,
+        is_romantasy: true,
+        series_name: p.series_name ?? null,
+        series_position: p.series_position ?? null,
       })));
     } catch {
       setError("Failed to load popular books");
