@@ -33,10 +33,10 @@ DEFAULT_API_URL = "https://book-recs-production.up.railway.app"
 # Data directory
 DATA_DIR = Path(__file__).parent / "data"
 
-# UCSD URLs
+# UCSD URLs (new location as of 2025)
 UCSD_URLS = {
-    "romance_books": "https://datarepo.eng.ucsd.edu/mcauley_group/gdrive/goodreads/byGenre/goodreads_books_romance.json.gz",
-    "romance_interactions": "https://datarepo.eng.ucsd.edu/mcauley_group/gdrive/goodreads/byGenre/goodreads_interactions_romance.json.gz",
+    "romance_books": "https://mcauleylab.ucsd.edu/public_datasets/gdrive/goodreads/byGenre/goodreads_books_romance.json.gz",
+    "romance_interactions": "https://mcauleylab.ucsd.edu/public_datasets/gdrive/goodreads/byGenre/goodreads_interactions_romance.json.gz",
 }
 
 # Romantasy detection
