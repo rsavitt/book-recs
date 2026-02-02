@@ -30,6 +30,7 @@ def get_user_profile(db: Session, user_id: int) -> UserProfile:
         top_shelves=top_shelves,
         spice_preference=user.spice_preference,
         prefers_ya=user.prefers_ya,
+        exclude_why_choose=user.exclude_why_choose,
     )
 
 

@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 
 from app.core.config import get_settings
 from app.models.book import Book, BookTag
@@ -210,6 +210,11 @@ class RecommendationEngine:
                 if book.is_ya != self.filters.is_ya:
                     continue
 
+            # Why Choose filter
+            if self.filters.exclude_why_choose:
+                if book.is_why_choose and book.why_choose_confidence >= 0.5:
+                    continue
+
             # Include tropes filter
             if self.filters.include_tropes:
                 book_tags = {tag.slug for tag in book.tags}
@@ -344,6 +349,10 @@ class RecommendationEngine:
             query = query.filter(Book.spice_level <= self.filters.spice_max)
         if self.filters.is_ya is not None:
             query = query.filter(Book.is_ya == self.filters.is_ya)
+        if self.filters.exclude_why_choose:
+            query = query.filter(
+                or_(Book.is_why_choose == False, Book.why_choose_confidence < 0.5)
+            )
 
         # Order by confidence (seed list books) then publication year
         books = (

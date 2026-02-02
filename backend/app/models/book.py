@@ -48,6 +48,10 @@ class Book(Base):
     spice_level: Mapped[int | None] = mapped_column(Integer)  # 0-5 scale
     is_ya: Mapped[bool | None] = mapped_column(Boolean)
 
+    # Why Choose / Reverse Harem classification
+    is_why_choose: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    why_choose_confidence: Mapped[float] = mapped_column(Float, default=0.0)  # 0-1 score
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(

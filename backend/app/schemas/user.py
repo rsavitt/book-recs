@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 class UserPreferencesUpdate(BaseModel):
     spice_preference: int | None = Field(None, ge=0, le=5)
     prefers_ya: bool | None = None
+    exclude_why_choose: bool | None = None  # Filter out Why Choose/Reverse Harem books
     is_public: bool | None = None
     allow_data_for_recs: bool | None = None
     display_name: str | None = Field(None, max_length=100)
@@ -30,6 +31,7 @@ class UserProfile(BaseModel):
     top_shelves: list[str]
     spice_preference: int | None
     prefers_ya: bool | None
+    exclude_why_choose: bool
 
     class Config:
         from_attributes = True

@@ -18,6 +18,8 @@ from app.data.tags import (
     TAGS,
     ROMANTASY_INDICATOR_TAGS,
     ROMANTASY_SUPPORTING_TAGS,
+    WHY_CHOOSE_INDICATOR_SHELVES,
+    WHY_CHOOSE_SUPPORTING_SHELVES,
     normalize_shelf_to_tag,
 )
 
@@ -30,6 +32,15 @@ class ClassificationResult:
     confidence: float  # 0.0 to 1.0
     reasons: list[str]
     inferred_tags: list[str]
+
+
+@dataclass
+class WhyChooseClassificationResult:
+    """Result of classifying a book as Why Choose / Reverse Harem."""
+
+    is_why_choose: bool
+    confidence: float  # 0.0 to 1.0
+    reasons: list[str]
 
 
 class RomantasyClassifier:
@@ -196,6 +207,164 @@ class RomantasyClassifier:
             self._romantasy_authors.add(author.lower().strip())
 
 
+class WhyChooseClassifier:
+    """
+    Classifies books as Why Choose / Reverse Harem based on shelf signals.
+
+    Confidence scoring:
+    - Strong shelf signals (why-choose, reverse-harem, rh): 0.4 per user, max 0.9
+    - Supporting shelf signals (poly, multiple-mates): 0.2 per user, max 0.6
+    - Series inference (other books in series are RH): 0.3
+    """
+
+    # Minimum confidence to auto-classify as Why Choose
+    AUTO_CLASSIFY_THRESHOLD = 0.5
+
+    # Weights for different signal types
+    SHELF_INDICATOR_WEIGHT = 0.4  # Per user with indicator shelf
+    SHELF_SUPPORTING_WEIGHT = 0.2  # Per user with supporting shelf
+    SERIES_WEIGHT = 0.3  # If other books in series are Why Choose
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def classify(self, book: Book) -> WhyChooseClassificationResult:
+        """
+        Classify a book as Why Choose or not.
+
+        Args:
+            book: Book to classify
+
+        Returns:
+            WhyChooseClassificationResult with confidence and reasoning
+        """
+        confidence = 0.0
+        reasons = []
+
+        # Check if already classified with high confidence
+        if book.is_why_choose and book.why_choose_confidence >= 0.9:
+            return WhyChooseClassificationResult(
+                is_why_choose=True,
+                confidence=book.why_choose_confidence,
+                reasons=["Previously classified with high confidence"],
+            )
+
+        # Analyze shelf signals
+        shelf_confidence, shelf_reasons = self._analyze_shelf_signals(book.id)
+        confidence += shelf_confidence
+        reasons.extend(shelf_reasons)
+
+        # Check series inference
+        if book.series_name:
+            series_confidence, series_reason = self._check_series_inference(
+                book.series_name, book.id
+            )
+            if series_confidence > 0:
+                confidence += series_confidence
+                if series_reason:
+                    reasons.append(series_reason)
+
+        # Cap confidence at 0.95
+        confidence = min(confidence, 0.95)
+
+        # Determine classification
+        is_why_choose = confidence >= self.AUTO_CLASSIFY_THRESHOLD
+
+        return WhyChooseClassificationResult(
+            is_why_choose=is_why_choose,
+            confidence=round(confidence, 3),
+            reasons=reasons,
+        )
+
+    def _analyze_shelf_signals(self, book_id: int) -> tuple[float, list[str]]:
+        """
+        Analyze user shelves to determine Why Choose likelihood.
+
+        Returns:
+            Tuple of (confidence_score, reasons)
+        """
+        # Get all shelves for this book across users
+        shelves = (
+            self.db.query(Shelf.shelf_name_normalized, func.count(Shelf.id).label("count"))
+            .filter(Shelf.book_id == book_id)
+            .group_by(Shelf.shelf_name_normalized)
+            .all()
+        )
+
+        if not shelves:
+            return 0.0, []
+
+        confidence = 0.0
+        reasons = []
+        indicator_count = 0
+        supporting_count = 0
+
+        for shelf_name, count in shelves:
+            # Normalize shelf name for comparison
+            normalized = shelf_name.lower().replace(" ", "-").replace("_", "-")
+
+            if normalized in WHY_CHOOSE_INDICATOR_SHELVES:
+                indicator_count += count
+            elif normalized in WHY_CHOOSE_SUPPORTING_SHELVES:
+                supporting_count += count
+
+        # Calculate confidence from shelf signals
+        if indicator_count > 0:
+            # Strong signal: users explicitly shelved as why-choose/rh
+            confidence += min(indicator_count * self.SHELF_INDICATOR_WEIGHT, 0.9)
+            reasons.append(f"{indicator_count} user(s) shelved as Why Choose/Reverse Harem")
+
+        if supporting_count > 0:
+            # Moderate signal: users shelved with poly/multiple-mates
+            confidence += min(supporting_count * self.SHELF_SUPPORTING_WEIGHT, 0.6)
+            if not reasons:  # Only add if no stronger reason
+                reasons.append(f"{supporting_count} user(s) shelved with polyamory/multiple-mates tags")
+
+        return confidence, reasons
+
+    def _check_series_inference(
+        self, series_name: str, current_book_id: int
+    ) -> tuple[float, str | None]:
+        """
+        Check if other books in the series are classified as Why Choose.
+
+        If any book in the series has high Why Choose confidence,
+        this book is likely also Why Choose.
+        """
+        # Find other books in the same series with Why Choose classification
+        series_books = (
+            self.db.query(Book)
+            .filter(
+                Book.series_name == series_name,
+                Book.id != current_book_id,
+                Book.is_why_choose == True,
+                Book.why_choose_confidence >= 0.7,
+            )
+            .limit(1)
+            .first()
+        )
+
+        if series_books:
+            return self.SERIES_WEIGHT, f"Other books in '{series_name}' series are Why Choose"
+
+        return 0.0, None
+
+
+def classify_why_choose(db: Session, book: Book) -> WhyChooseClassificationResult:
+    """
+    Convenience function to classify a single book for Why Choose.
+
+    Args:
+        db: Database session
+        book: Book to classify
+
+    Returns:
+        WhyChooseClassificationResult
+    """
+    classifier = WhyChooseClassifier(db)
+    return classifier.classify(book)
+
+
 def classify_book(db: Session, book: Book) -> ClassificationResult:
     """
     Convenience function to classify a single book.
@@ -282,6 +451,50 @@ def _add_tags_to_book(db: Session, book: Book, tag_slugs: list[str]) -> int:
     return added
 
 
+def reclassify_all_why_choose(db: Session, min_confidence: float = 0.5) -> dict:
+    """
+    Reclassify all books for Why Choose status.
+
+    This should be run periodically as more users import their libraries,
+    providing more shelf signal data.
+
+    Args:
+        db: Database session
+        min_confidence: Minimum confidence to mark as Why Choose
+
+    Returns:
+        Dict with statistics about the reclassification
+    """
+    classifier = WhyChooseClassifier(db)
+    classifier.AUTO_CLASSIFY_THRESHOLD = min_confidence
+
+    stats = {
+        "total_books": 0,
+        "newly_classified": 0,
+        "confidence_updated": 0,
+    }
+
+    # Get all books (we want to check all for why-choose)
+    books = db.query(Book).all()
+
+    for book in books:
+        stats["total_books"] += 1
+        result = classifier.classify(book)
+
+        # Update classification if changed
+        if result.is_why_choose != book.is_why_choose:
+            book.is_why_choose = result.is_why_choose
+            stats["newly_classified"] += 1
+
+        # Update confidence
+        if abs(result.confidence - book.why_choose_confidence) > 0.01:
+            book.why_choose_confidence = result.confidence
+            stats["confidence_updated"] += 1
+
+    db.commit()
+    return stats
+
+
 def get_classification_stats(db: Session) -> dict:
     """
     Get statistics about Romantasy classification in the database.
@@ -302,10 +515,21 @@ def get_classification_stats(db: Session) -> dict:
         .scalar()
     )
 
+    # Why Choose stats
+    why_choose_books = db.query(func.count(Book.id)).filter(Book.is_why_choose == True).scalar()
+    why_choose_high_confidence = (
+        db.query(func.count(Book.id))
+        .filter(Book.is_why_choose == True, Book.why_choose_confidence >= 0.7)
+        .scalar()
+    )
+
     return {
         "total_books": total_books,
         "romantasy_books": romantasy_books,
         "romantasy_percentage": round(romantasy_books / total_books * 100, 1) if total_books > 0 else 0,
         "high_confidence_count": high_confidence,
         "seed_list_count": seed_list,
+        "why_choose_books": why_choose_books,
+        "why_choose_percentage": round(why_choose_books / total_books * 100, 1) if total_books > 0 else 0,
+        "why_choose_high_confidence": why_choose_high_confidence,
     }

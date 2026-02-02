@@ -24,6 +24,7 @@ class User(Base):
     # Preferences (onboarding)
     spice_preference: Mapped[int | None] = mapped_column(Integer)  # 0-5 scale
     prefers_ya: Mapped[bool | None] = mapped_column(Boolean)  # True=YA, False=Adult, None=Both
+    exclude_why_choose: Mapped[bool] = mapped_column(Boolean, default=True)  # Filter out reverse harem/why choose
 
     # Metadata
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

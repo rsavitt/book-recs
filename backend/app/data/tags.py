@@ -218,6 +218,34 @@ TAGS = [
         "description": "Protective rage when love interest is hurt",
         "is_romantasy_indicator": True,
     },
+    {
+        "name": "Why Choose",
+        "slug": "why-choose",
+        "category": "trope",
+        "description": "Protagonist has multiple love interests and doesn't choose between them",
+        "is_romantasy_indicator": False,
+    },
+    {
+        "name": "Reverse Harem",
+        "slug": "reverse-harem",
+        "category": "trope",
+        "description": "One protagonist with multiple romantic partners (typically female protagonist with multiple male love interests)",
+        "is_romantasy_indicator": False,
+    },
+    {
+        "name": "Polyamory",
+        "slug": "polyamory",
+        "category": "trope",
+        "description": "Multiple romantic relationships with consent of all involved",
+        "is_romantasy_indicator": False,
+    },
+    {
+        "name": "Love Triangle",
+        "slug": "love-triangle",
+        "category": "trope",
+        "description": "Protagonist torn between two love interests (typically chooses one)",
+        "is_romantasy_indicator": False,
+    },
 
     # === SETTING TAGS ===
     {
@@ -376,6 +404,57 @@ SHELF_TO_TAG_MAPPING = {
     "dark-fantasy": "dark-fantasy",
     "ya-fantasy": "ya-fantasy",
     "adult-fantasy": "adult-fantasy",
+
+    # Why Choose / Reverse Harem mappings
+    "why-choose": "why-choose",
+    "whychoose": "why-choose",
+    "why-choose-romance": "why-choose",
+    "reverse-harem": "reverse-harem",
+    "reverseharem": "reverse-harem",
+    "rh": "reverse-harem",
+    "rh-romance": "reverse-harem",
+    "harem": "reverse-harem",
+    "polyamory": "polyamory",
+    "poly": "polyamory",
+    "polycule": "polyamory",
+    "polyamorous": "polyamory",
+    "multiple-love-interests": "why-choose",
+    "multiple-mates": "why-choose",
+    "shared-mate": "why-choose",
+    "pack-romance": "why-choose",
+    "mmf": "polyamory",
+    "mfm": "polyamory",
+    "love-triangle": "love-triangle",
+    "lovetriangle": "love-triangle",
+}
+
+
+# Why Choose / Reverse Harem indicator shelves (for classification)
+WHY_CHOOSE_INDICATOR_SHELVES = {
+    # Strong indicators (high confidence)
+    "why-choose",
+    "whychoose",
+    "reverse-harem",
+    "reverseharem",
+    "rh",
+    "rh-romance",
+    "harem",
+}
+
+WHY_CHOOSE_SUPPORTING_SHELVES = {
+    # Supporting indicators (medium confidence)
+    "poly",
+    "polyamory",
+    "polyamorous",
+    "polycule",
+    "multiple-love-interests",
+    "multiple-mates",
+    "shared-mate",
+    "pack-romance",
+    "mmf",
+    "mfm",
+    "mmmf",
+    "fmmm",
 }
 
 

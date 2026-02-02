@@ -166,6 +166,7 @@ async def get_recommendations(
     is_ya: bool | None = Query(None),
     tropes: list[str] | None = Query(None),
     exclude_tropes: list[str] | None = Query(None),
+    exclude_why_choose: bool | None = Query(None, description="Filter out Why Choose/Reverse Harem books. Defaults to user preference."),
     # Pagination
     limit: int = Query(20, le=50),
     offset: int = Query(0),
@@ -174,14 +175,19 @@ async def get_recommendations(
     Get personalized Romantasy recommendations.
 
     Recommendations are based on users with similar reading tastes.
-    Filter by spice level, age category, and tropes.
+    Filter by spice level, age category, tropes, and Why Choose preference.
     """
+    # Use user preference as default for exclude_why_choose
+    if exclude_why_choose is None:
+        exclude_why_choose = current_user.exclude_why_choose
+
     filters = RecommendationFilters(
         spice_min=spice_min,
         spice_max=spice_max,
         is_ya=is_ya,
         include_tropes=tropes,
         exclude_tropes=exclude_tropes,
+        exclude_why_choose=exclude_why_choose,
     )
 
     return recommendation_service.get_recommendations(

@@ -7,6 +7,7 @@ class RecommendationFilters(BaseModel):
     is_ya: bool | None = None
     include_tropes: list[str] | None = None
     exclude_tropes: list[str] | None = None
+    exclude_why_choose: bool | None = None  # True to filter out Why Choose/Reverse Harem books
 
 
 class RecommendationExplanation(BaseModel):
