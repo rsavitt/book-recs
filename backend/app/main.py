@@ -47,8 +47,31 @@ async def lifespan(app: FastAPI):
         from app.models.book import Book, BookEdition, BookTag
         from app.models.rating import Rating, Shelf
         from app.models.similarity import UserSimilarity
+        from sqlalchemy import text, inspect
+
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables verified/created")
+
+        # Ensure new columns exist (for existing databases)
+        inspector = inspect(engine)
+        with engine.connect() as conn:
+            # Check and add missing columns to books table
+            book_columns = [col['name'] for col in inspector.get_columns('books')]
+            if 'is_why_choose' not in book_columns:
+                conn.execute(text("ALTER TABLE books ADD COLUMN is_why_choose BOOLEAN NOT NULL DEFAULT false"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_books_is_why_choose ON books (is_why_choose)"))
+                logger.info("Added is_why_choose column to books table")
+            if 'why_choose_confidence' not in book_columns:
+                conn.execute(text("ALTER TABLE books ADD COLUMN why_choose_confidence FLOAT NOT NULL DEFAULT 0.0"))
+                logger.info("Added why_choose_confidence column to books table")
+
+            # Check and add missing columns to users table
+            user_columns = [col['name'] for col in inspector.get_columns('users')]
+            if 'exclude_why_choose' not in user_columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN exclude_why_choose BOOLEAN NOT NULL DEFAULT true"))
+                logger.info("Added exclude_why_choose column to users table")
+
+            conn.commit()
 
         # Auto-seed if no books exist
         db = SessionLocal()
