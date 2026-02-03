@@ -109,7 +109,7 @@ class RecommendationEngine:
             .limit(100)  # Use top 100 neighbors for scoring
             .all()
         )
-        return [(n_id, sim) for n_id, sim in neighbors]
+        return list(neighbors)
 
     def _get_read_book_ids(self) -> set[int]:
         """Get IDs of books the user has already read/rated."""
