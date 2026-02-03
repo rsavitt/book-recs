@@ -15,10 +15,10 @@ from app.core.database import get_db
 from app.services import auth_service
 from app.services.onboarding_service import (
     get_onboarding_status,
-    save_preferences,
     get_starter_books,
-    rate_starter_books,
     get_trope_options,
+    rate_starter_books,
+    save_preferences,
 )
 
 router = APIRouter()

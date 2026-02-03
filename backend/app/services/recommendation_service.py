@@ -11,21 +11,21 @@ Generates personalized Romantasy recommendations using collaborative filtering:
 4. Generate explanations for each recommendation
 """
 
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass, field
 
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
 
 from app.core.config import get_settings
-from app.models.book import Book, BookTag
+from app.models.book import Book
 from app.models.rating import Rating
 from app.models.similarity import UserSimilarity
 from app.models.user import User
 from app.schemas.recommendation import (
-    RecommendationResponse,
-    RecommendationFilters,
     RecommendationExplanation,
+    RecommendationFilters,
+    RecommendationResponse,
 )
 
 settings = get_settings()
@@ -131,7 +131,7 @@ class RecommendationEngine:
         Uses weighted average: score = Σ(sim * rating) / Σ(sim)
         """
         neighbor_ids = [n_id for n_id, _ in neighbors]
-        neighbor_sim = {n_id: sim for n_id, sim in neighbors}
+        neighbor_sim = dict(neighbors)
 
         # Get all ratings from neighbors for Romantasy books
         neighbor_ratings = (
@@ -140,7 +140,7 @@ class RecommendationEngine:
             .filter(
                 Rating.user_id.in_(neighbor_ids),
                 Rating.rating > 0,
-                Book.is_romantasy == True,
+                Book.is_romantasy,
                 ~Rating.book_id.in_(exclude_book_ids) if exclude_book_ids else True,
             )
             .all()
@@ -338,7 +338,7 @@ class RecommendationEngine:
 
         # Query for popular Romantasy books
         query = self.db.query(Book).filter(
-            Book.is_romantasy == True,
+            Book.is_romantasy,
             ~Book.id.in_(read_book_ids) if read_book_ids else True,
         )
 
@@ -351,7 +351,7 @@ class RecommendationEngine:
             query = query.filter(Book.is_ya == self.filters.is_ya)
         if self.filters.exclude_why_choose:
             query = query.filter(
-                or_(Book.is_why_choose == False, Book.why_choose_confidence < 0.5)
+                or_(not Book.is_why_choose, Book.why_choose_confidence < 0.5)
             )
 
         # Order by confidence (seed list books) then publication year
@@ -470,7 +470,7 @@ def get_recommendation_explanation(db: Session, user_id: int, book_id: int) -> d
         .join(User, User.id == UserSimilarity.neighbor_id)
         .filter(
             UserSimilarity.user_id == user_id,
-            User.is_public == True,  # Only show public users
+            User.is_public,  # Only show public users
         )
         .order_by(UserSimilarity.adjusted_similarity.desc())
         .limit(10)

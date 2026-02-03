@@ -1,11 +1,11 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from app.models.user import User
+from app.models.book import Book
 from app.models.rating import Rating, Shelf
 from app.models.similarity import UserSimilarity
-from app.models.book import Book
-from app.schemas.user import UserProfile, UserPreferencesUpdate, RatingStats, SimilarUser
+from app.models.user import User
+from app.schemas.user import RatingStats, SimilarUser, UserPreferencesUpdate, UserProfile
 
 
 def get_user_profile(db: Session, user_id: int) -> UserProfile:
@@ -90,7 +90,7 @@ def update_preferences(db: Session, user_id: int, preferences: UserPreferencesUp
 
 def get_public_profile(db: Session, username: str) -> UserProfile | None:
     """Get a user's public profile if they've opted in."""
-    user = db.query(User).filter(User.username == username, User.is_public == True).first()
+    user = db.query(User).filter(User.username == username, User.is_public).first()
     if not user:
         return None
     return get_user_profile(db, user.id)

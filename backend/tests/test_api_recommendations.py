@@ -1,7 +1,7 @@
 """Tests for recommendations API endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
+
 from app.models.similarity import UserSimilarity
 
 
@@ -13,8 +13,8 @@ class TestGetRecommendations:
     ):
         """Should return recommendations for authenticated user."""
         # Create another user with ratings to generate similarity
-        from app.models.user import User
         from app.models.rating import Rating
+        from app.models.user import User
         from app.services.auth_service import get_password_hash
 
         other_user = User(

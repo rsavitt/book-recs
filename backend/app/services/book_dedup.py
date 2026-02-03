@@ -10,7 +10,6 @@ import unicodedata
 from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, func
 
 from app.models.book import Book, BookEdition
 from app.services.csv_parser import ParsedBook

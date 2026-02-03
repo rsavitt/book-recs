@@ -9,11 +9,9 @@ Handles the full import pipeline:
 5. Trigger similarity recomputation
 """
 
-import asyncio
 import re
 import uuid
 from datetime import datetime
-from typing import Callable
 
 from sqlalchemy.orm import Session
 
@@ -21,11 +19,10 @@ from app.core.database import SessionLocal
 from app.models.book import Book
 from app.models.rating import Rating, Shelf
 from app.models.user import User
-from app.schemas.imports import ImportStatus, ImportResult
-from app.services.csv_parser import GoodreadsCSVParser, ParsedBook, parse_library_csv
-from app.services.book_dedup import BookDeduplicator, DeduplicationResult
+from app.schemas.imports import ImportResult, ImportStatus
+from app.services.book_dedup import BookDeduplicator
+from app.services.csv_parser import ParsedBook, parse_library_csv
 from app.services.external_apis import MetadataEnricher
-
 
 # In-memory store for import status (replace with Redis/DB in production)
 _import_status: dict[str, dict] = {}
@@ -294,7 +291,7 @@ def get_import_status(db: Session, import_id: str, user_id: int) -> ImportStatus
 def get_import_history(db: Session, user_id: int, limit: int = 10) -> list[ImportResult]:
     """Get user's import history."""
     results = []
-    for import_id, status in _import_status.items():
+    for _import_id, status in _import_status.items():
         if status["user_id"] == user_id and status["status"] in ("completed", "failed"):
             results.append(
                 ImportResult(

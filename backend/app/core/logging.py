@@ -2,12 +2,12 @@
 Structured logging configuration for production.
 """
 
+import json
 import logging
 import sys
-import json
+from contextvars import ContextVar
 from datetime import datetime
 from typing import Any
-from contextvars import ContextVar
 
 from app.core.config import get_settings
 

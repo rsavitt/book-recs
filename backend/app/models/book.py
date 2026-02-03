@@ -1,9 +1,9 @@
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime, Text, Integer, Float, ForeignKey, Table, Column
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-
 
 # Association table for book <-> tag many-to-many
 book_tag_association = Table(
@@ -128,4 +128,4 @@ class BookTag(Base):
 
 # Forward references
 from app.models.rating import Rating  # noqa: E402
-from app.models.reddit import BookRedditMetrics, BookRecommendationEdge  # noqa: E402
+from app.models.reddit import BookRecommendationEdge, BookRedditMetrics  # noqa: E402

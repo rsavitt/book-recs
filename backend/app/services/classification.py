@@ -9,19 +9,19 @@ Classifies books as Romantasy using multiple signals:
 """
 
 from dataclasses import dataclass
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 
-from app.models.book import Book, BookTag, book_tag_association
-from app.models.rating import Shelf
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from app.data.tags import (
-    TAGS,
     ROMANTASY_INDICATOR_TAGS,
     ROMANTASY_SUPPORTING_TAGS,
     WHY_CHOOSE_INDICATOR_SHELVES,
     WHY_CHOOSE_SUPPORTING_SHELVES,
     normalize_shelf_to_tag,
 )
+from app.models.book import Book, BookTag
+from app.models.rating import Shelf
 
 
 @dataclass
@@ -198,7 +198,7 @@ class RomantasyClassifier:
 
         authors = (
             self.db.query(Book.author)
-            .filter(Book.is_romantasy == True, Book.romantasy_confidence >= 0.8)
+            .filter(Book.is_romantasy, Book.romantasy_confidence >= 0.8)
             .distinct()
             .all()
         )
@@ -337,7 +337,7 @@ class WhyChooseClassifier:
             .filter(
                 Book.series_name == series_name,
                 Book.id != current_book_id,
-                Book.is_why_choose == True,
+                Book.is_why_choose,
                 Book.why_choose_confidence >= 0.7,
             )
             .limit(1)
@@ -503,23 +503,23 @@ def get_classification_stats(db: Session) -> dict:
         Dict with classification statistics
     """
     total_books = db.query(func.count(Book.id)).scalar()
-    romantasy_books = db.query(func.count(Book.id)).filter(Book.is_romantasy == True).scalar()
+    romantasy_books = db.query(func.count(Book.id)).filter(Book.is_romantasy).scalar()
     high_confidence = (
         db.query(func.count(Book.id))
-        .filter(Book.is_romantasy == True, Book.romantasy_confidence >= 0.8)
+        .filter(Book.is_romantasy, Book.romantasy_confidence >= 0.8)
         .scalar()
     )
     seed_list = (
         db.query(func.count(Book.id))
-        .filter(Book.is_romantasy == True, Book.romantasy_confidence >= 0.95)
+        .filter(Book.is_romantasy, Book.romantasy_confidence >= 0.95)
         .scalar()
     )
 
     # Why Choose stats
-    why_choose_books = db.query(func.count(Book.id)).filter(Book.is_why_choose == True).scalar()
+    why_choose_books = db.query(func.count(Book.id)).filter(Book.is_why_choose).scalar()
     why_choose_high_confidence = (
         db.query(func.count(Book.id))
-        .filter(Book.is_why_choose == True, Book.why_choose_confidence >= 0.7)
+        .filter(Book.is_why_choose, Book.why_choose_confidence >= 0.7)
         .scalar()
     )
 

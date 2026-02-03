@@ -7,16 +7,15 @@ Handles:
 - Privacy settings
 """
 
-import json
 from datetime import datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.models.user import User
 from app.models.book import Book
 from app.models.rating import Rating, Shelf
 from app.models.similarity import UserSimilarity
+from app.models.user import User
 
 
 def export_user_data(db: Session, user_id: int) -> dict[str, Any]:

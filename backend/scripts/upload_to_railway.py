@@ -16,11 +16,8 @@ Usage:
 import argparse
 import csv
 import gzip
-import hashlib
 import json
-import os
 import sys
-import tempfile
 import urllib.request
 from pathlib import Path
 from typing import Iterator

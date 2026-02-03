@@ -16,10 +16,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal, engine, Base
-from app.models.book import Book, BookTag, book_tag_association
-from app.data.tags import TAGS
+from app.core.database import Base, SessionLocal, engine
 from app.data.romantasy_seed import ROMANTASY_SEED_BOOKS
+from app.data.tags import TAGS
+from app.models.book import Book, BookTag
 
 
 def create_tables():
@@ -155,7 +155,7 @@ def _add_tags_to_book(book: Book, tag_slugs: list[str], tag_map: dict[str, BookT
 def print_stats(db: Session):
     """Print database statistics after seeding."""
     book_count = db.query(Book).count()
-    romantasy_count = db.query(Book).filter(Book.is_romantasy == True).count()
+    romantasy_count = db.query(Book).filter(Book.is_romantasy).count()
     tag_count = db.query(BookTag).count()
 
     print("\n=== Database Statistics ===")
@@ -179,7 +179,7 @@ def print_stats(db: Session):
     print("\nRomantasy books by spice level:")
     spice_levels = (
         db.query(Book.spice_level, func.count(Book.id))
-        .filter(Book.is_romantasy == True)
+        .filter(Book.is_romantasy)
         .group_by(Book.spice_level)
         .order_by(Book.spice_level)
         .all()
@@ -190,9 +190,9 @@ def print_stats(db: Session):
 
     # YA vs Adult breakdown
     print("\nRomantasy books by age category:")
-    ya_count = db.query(Book).filter(Book.is_romantasy == True, Book.is_ya == True).count()
-    adult_count = db.query(Book).filter(Book.is_romantasy == True, Book.is_ya == False).count()
-    unknown_count = db.query(Book).filter(Book.is_romantasy == True, Book.is_ya == None).count()
+    ya_count = db.query(Book).filter(Book.is_romantasy, Book.is_ya).count()
+    adult_count = db.query(Book).filter(Book.is_romantasy, not Book.is_ya).count()
+    unknown_count = db.query(Book).filter(Book.is_romantasy, Book.is_ya is None).count()
     print(f"  YA: {ya_count}")
     print(f"  Adult: {adult_count}")
     print(f"  Unknown: {unknown_count}")

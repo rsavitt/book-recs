@@ -5,7 +5,7 @@ Run this once after deployment to create all tables.
 Usage: python -m scripts.init_db
 """
 
-from app.core.database import engine, Base
+from app.core.database import Base, engine
 from app.models import *  # noqa: F401, F403
 
 

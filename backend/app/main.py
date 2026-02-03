@@ -3,17 +3,17 @@ Main FastAPI application entry point.
 """
 
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import router as api_router
 from app.core.config import get_settings
-from app.core.logging import setup_logging, get_logger
+from app.core.logging import get_logger, setup_logging
 from app.core.middleware import (
     RequestLoggingMiddleware,
-    RateLimitMiddleware,
     SecurityHeadersMiddleware,
 )
-from app.api import router as api_router
 
 settings = get_settings()
 
@@ -42,12 +42,10 @@ async def lifespan(app: FastAPI):
 
     # Auto-create database tables on startup
     try:
-        from app.core.database import engine, Base, SessionLocal
-        from app.models.user import User
-        from app.models.book import Book, BookEdition, BookTag
-        from app.models.rating import Rating, Shelf
-        from app.models.similarity import UserSimilarity
-        from sqlalchemy import text, inspect
+        from sqlalchemy import inspect, text
+
+        from app.core.database import Base, SessionLocal, engine
+        from app.models.book import Book
 
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables verified/created")
@@ -184,6 +182,7 @@ async def readiness_check():
     Verifies the application can handle requests (database connected, etc).
     """
     from sqlalchemy import text
+
     from app.core.database import get_db
 
     try:

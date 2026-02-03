@@ -12,7 +12,6 @@ from datetime import date, datetime
 
 from app.services.csv_parser import ParsedBook
 
-
 # Maximum field lengths to prevent memory exhaustion
 MAX_TITLE_LENGTH = 500
 MAX_AUTHOR_LENGTH = 255

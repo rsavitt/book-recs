@@ -10,9 +10,9 @@ This creates realistic-looking rating patterns:
 Run this AFTER seed_books.py to populate ratings.
 """
 
-import sys
-import random
 import hashlib
+import random
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -22,10 +22,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import get_settings
 from app.core.database import Base
-from app.models.book import Book, BookTag
-from app.models.user import User
+from app.models.book import Book
 from app.models.rating import Rating
-
+from app.models.user import User
 
 # Define reader "personas" - users with similar taste patterns
 READER_PERSONAS = [

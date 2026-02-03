@@ -2,21 +2,20 @@
 Pytest configuration and fixtures for backend tests.
 """
 
-import pytest
 from typing import Generator
-from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app
 from app.core.database import Base, get_db
-from app.models.user import User
+from app.main import app
 from app.models.book import Book, BookTag
 from app.models.rating import Rating
-from app.services.auth_service import get_password_hash, create_access_token
-
+from app.models.user import User
+from app.services.auth_service import create_access_token, get_password_hash
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

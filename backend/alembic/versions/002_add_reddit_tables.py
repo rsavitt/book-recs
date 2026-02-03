@@ -5,11 +5,11 @@ Revises: 001_add_why_choose
 Create Date: 2025-02-02
 
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect
 from sqlalchemy.dialects.postgresql import JSON
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '002_add_reddit_tables'

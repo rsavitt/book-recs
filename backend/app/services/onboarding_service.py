@@ -9,12 +9,12 @@ Handles new user onboarding:
 
 from datetime import datetime
 
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from app.models.user import User
 from app.models.book import Book, BookTag
 from app.models.rating import Rating
+from app.models.user import User
 from app.services.similarity import compute_user_similarity
 
 
@@ -124,7 +124,7 @@ def get_starter_books(db: Session, limit: int = 20) -> list[dict]:
     books = (
         db.query(Book)
         .filter(
-            Book.is_romantasy == True,
+            Book.is_romantasy,
             Book.romantasy_confidence >= 0.95,  # Seed list books
         )
         .order_by(Book.publication_year.desc())

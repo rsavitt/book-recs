@@ -1,8 +1,8 @@
-from app.models.user import User
 from app.models.book import Book, BookEdition, BookTag
 from app.models.rating import Rating, Shelf
+from app.models.reddit import BookRecommendationEdge, BookRedditMetrics
 from app.models.similarity import UserSimilarity
-from app.models.reddit import BookRedditMetrics, BookRecommendationEdge
+from app.models.user import User
 
 __all__ = [
     "User",

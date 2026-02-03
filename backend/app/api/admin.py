@@ -5,30 +5,30 @@ These endpoints are for administrative use and should be protected
 in production.
 """
 
-import random
-import hashlib
 import gzip
+import hashlib
 import json
+import random
 import tempfile
-import urllib.request
 import unicodedata
+import urllib.request
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, BackgroundTasks, Query, Body
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.data.romantasy_seed import SEED_BOOK_COUNT
+from app.data.tags import TAGS
+from app.models.book import Book, BookEdition, BookTag
+from app.models.rating import Rating
+from app.models.user import User
 from app.services.classification import (
-    reclassify_all_books,
     get_classification_stats,
+    reclassify_all_books,
 )
 from app.services.similarity import compute_all_similarities
-from app.data.tags import TAGS
-from app.data.romantasy_seed import SEED_BOOK_COUNT
-from app.models.book import Book, BookTag, BookEdition
-from app.models.user import User
-from app.models.rating import Rating
 
 router = APIRouter()
 

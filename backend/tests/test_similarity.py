@@ -1,7 +1,8 @@
 """Tests for similarity computation service."""
 
+
 import pytest
-import math
+
 from app.services.similarity import SimilarityComputer
 
 

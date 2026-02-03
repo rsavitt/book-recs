@@ -6,6 +6,7 @@ Usage: python -m scripts.seed_books
 """
 
 import unicodedata
+
 from app.core.database import SessionLocal
 from app.models.book import Book, BookTag
 

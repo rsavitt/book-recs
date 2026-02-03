@@ -1,6 +1,5 @@
 """Tests for books API endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 

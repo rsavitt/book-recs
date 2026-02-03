@@ -8,8 +8,8 @@ Searches for books by known romantasy authors and imports them.
 import argparse
 import json
 import time
+
 import requests
-from pathlib import Path
 
 DEFAULT_API_URL = "https://book-recs-production.up.railway.app"
 

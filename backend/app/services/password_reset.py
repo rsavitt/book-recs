@@ -8,11 +8,10 @@ Uses JWT tokens for secure, time-limited reset links.
 import secrets
 from datetime import datetime, timedelta
 
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.models.user import User
 from app.services.auth_service import get_password_hash, get_user_by_email
 
 settings = get_settings()

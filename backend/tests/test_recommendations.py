@@ -1,9 +1,10 @@
 """Tests for recommendation service."""
 
+
 import pytest
-from unittest.mock import MagicMock, patch
-from app.services.recommendation_service import RecommendationEngine
+
 from app.schemas.recommendation import RecommendationFilters
+from app.services.recommendation_service import RecommendationEngine
 
 
 class TestDiversityConstraints:

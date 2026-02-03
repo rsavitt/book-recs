@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.auth import UserCreate, TokenPayload
+from app.schemas.auth import TokenPayload, UserCreate
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/login")
@@ -90,7 +90,7 @@ async def get_current_user(
             raise credentials_exception
         token_data = TokenPayload(sub=user_id)
     except JWTError:
-        raise credentials_exception
+        raise credentials_exception from None
 
     user = get_user_by_id(db, int(token_data.sub))
     if user is None:

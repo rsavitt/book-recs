@@ -1,9 +1,7 @@
 """Tests for StoryGraph CSV parser and auto-detection."""
 
-import pytest
-from app.services.storygraph_parser import StoryGraphCSVParser, parse_storygraph_csv
 from app.services.csv_parser import detect_csv_source, parse_library_csv
-
+from app.services.storygraph_parser import StoryGraphCSVParser, parse_storygraph_csv
 
 # Sample StoryGraph CSV content
 VALID_STORYGRAPH_CSV = b"""Title,Authors,Contributors,ISBN/UID,Format,Read Status,Date Added,Last Date Read,Dates Read,Read Count,Moods,Pace,Character- or Plot-Driven?,Strong Character Development?,Loveable Characters?,Diverse Characters?,Flawed Characters?,Star Rating,Review,Content Warnings,Content Warning Description,Tags,Owned?

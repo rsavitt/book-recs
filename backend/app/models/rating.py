@@ -1,5 +1,6 @@
-from datetime import datetime, date
-from sqlalchemy import String, DateTime, Integer, ForeignKey, Date, UniqueConstraint
+from datetime import date, datetime
+
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -60,5 +61,5 @@ class Shelf(Base):
 
 
 # Forward references
-from app.models.user import User  # noqa: E402, F811
 from app.models.book import Book  # noqa: E402, F811
+from app.models.user import User  # noqa: E402, F811

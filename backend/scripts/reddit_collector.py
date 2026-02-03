@@ -20,7 +20,7 @@ import logging
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import datetime
 from typing import Iterator
 
 import praw
@@ -29,10 +29,9 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.database import SessionLocal
-from app.models.book import Book
-from app.models.reddit import BookRedditMetrics, BookRecommendationEdge
 from app.data.reddit_aliases import BOOK_ALIASES, get_canonical_title
-from app.data.tags import ROMANTASY_INDICATOR_TAGS, ROMANTASY_SUPPORTING_TAGS
+from app.models.book import Book
+from app.models.reddit import BookRecommendationEdge, BookRedditMetrics
 
 # Configure logging
 logging.basicConfig(

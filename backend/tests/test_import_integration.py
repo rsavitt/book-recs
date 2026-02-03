@@ -1,12 +1,11 @@
 """Integration tests for the import pipeline."""
 
-import pytest
 from io import BytesIO
-from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
-from app.services.csv_parser import parse_goodreads_csv
+from fastapi.testclient import TestClient
+
 from app.services.book_dedup import BookDeduplicator
+from app.services.csv_parser import parse_goodreads_csv
 
 
 class TestCSVImportEndpoint:

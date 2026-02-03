@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.imports import ImportStatus, ImportResult
+from app.schemas.imports import ImportResult, ImportStatus
 from app.services import auth_service, import_service
 
 router = APIRouter()
@@ -61,13 +61,13 @@ async def import_library_csv(
             raise HTTPException(
                 status_code=400,
                 detail="File does not appear to be a valid text CSV file",
-            )
+            ) from None
 
     # Validate and detect source
     try:
         import_id = import_service.validate_and_create_import(db, current_user.id, content)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     # Process in background
     background_tasks.add_task(

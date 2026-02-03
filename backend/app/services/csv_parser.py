@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Iterator
 
-
 # Maximum field lengths to prevent memory exhaustion
 MAX_TITLE_LENGTH = 500
 MAX_AUTHOR_LENGTH = 255

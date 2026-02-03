@@ -11,17 +11,16 @@ small overlap counts.
 
 import math
 from dataclasses import dataclass
-from typing import Iterator
 
 import numpy as np
 from scipy import sparse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
 
 from app.core.config import get_settings
-from app.models.user import User
 from app.models.rating import Rating
 from app.models.similarity import UserSimilarity
+from app.models.user import User
 
 settings = get_settings()
 
@@ -139,7 +138,7 @@ class SimilarityComputer:
                 Rating.book_id.in_(user_books),
                 Rating.user_id != user_id,
                 Rating.rating > 0,
-                User.allow_data_for_recs == True,
+                User.allow_data_for_recs,
             )
             .group_by(Rating.user_id)
             .having(func.count(Rating.id) >= self.min_overlap)
@@ -176,7 +175,7 @@ class SimilarityComputer:
         # Compute correlation
         numerator = sum(
             (u - user_mean) * (n - neighbor_mean)
-            for u, n in zip(user_vals, neighbor_vals)
+            for u, n in zip(user_vals, neighbor_vals, strict=False)
         )
 
         user_std = math.sqrt(sum((u - user_mean) ** 2 for u in user_vals))
@@ -297,7 +296,7 @@ class BatchSimilarityComputer:
         users = (
             self.db.query(User.id)
             .join(Rating, Rating.user_id == User.id)
-            .filter(User.allow_data_for_recs == True, Rating.rating > 0)
+            .filter(User.allow_data_for_recs, Rating.rating > 0)
             .group_by(User.id)
             .having(func.count(Rating.id) >= self.min_overlap)
             .all()
@@ -328,7 +327,7 @@ class BatchSimilarityComputer:
 
         # Create mappings
         user_to_idx = {uid: i for i, uid in enumerate(user_ids)}
-        book_ids = list(set(r.book_id for r in ratings))
+        book_ids = list({r.book_id for r in ratings})
         book_to_idx = {bid: i for i, bid in enumerate(book_ids)}
 
         # Build sparse matrix

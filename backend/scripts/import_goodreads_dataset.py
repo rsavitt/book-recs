@@ -15,7 +15,6 @@ import os
 import sys
 import urllib.request
 from pathlib import Path
-from collections import defaultdict
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -25,9 +24,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import get_settings
 from app.core.database import Base
-from app.models.book import Book, BookTag, BookEdition
-from app.models.user import User
+from app.models.book import Book, BookEdition, BookTag
 from app.models.rating import Rating
+from app.models.user import User
 
 # UCSD Goodreads dataset URLs
 # Using the genre-specific subsets for smaller downloads

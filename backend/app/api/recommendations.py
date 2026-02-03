@@ -1,12 +1,10 @@
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from app.core.database import get_db
-from app.schemas.recommendation import RecommendationResponse, RecommendationFilters
+from app.models.book import Book
+from app.schemas.recommendation import RecommendationFilters, RecommendationResponse
 from app.services import auth_service, recommendation_service
-from app.models.book import Book, BookTag
-from app.models.rating import Rating
 
 router = APIRouter()
 
@@ -24,7 +22,7 @@ async def get_popular_books(
     # Get books with highest average ratings (minimum 1 rating for seeded data)
     popular = (
         db.query(Book)
-        .filter(Book.is_romantasy == True)
+        .filter(Book.is_romantasy)
         .order_by(Book.romantasy_confidence.desc(), Book.publication_year.desc())
         .limit(limit)
         .all()
@@ -88,7 +86,7 @@ async def get_quick_recommendations(
             .filter(
                 Book.series_name.in_(liked_series),
                 Book.id.notin_(seen_ids),
-                Book.is_romantasy == True,
+                Book.is_romantasy,
             )
             .order_by(Book.series_position)
             .limit(10)
@@ -105,7 +103,7 @@ async def get_quick_recommendations(
         .filter(
             Book.author_normalized.in_(liked_authors),
             Book.id.notin_(seen_ids),
-            Book.is_romantasy == True,
+            Book.is_romantasy,
         )
         .limit(10)
         .all()
@@ -118,6 +116,7 @@ async def get_quick_recommendations(
     # Similar tags - find books with overlapping tags
     if liked_tag_ids:
         from sqlalchemy import func
+
         from app.models.book import book_tag_association
 
         similar_books = (
@@ -126,7 +125,7 @@ async def get_quick_recommendations(
             .filter(
                 book_tag_association.c.tag_id.in_(liked_tag_ids),
                 Book.id.notin_(seen_ids),
-                Book.is_romantasy == True,
+                Book.is_romantasy,
             )
             .group_by(Book.id)
             .order_by(func.count(book_tag_association.c.tag_id).desc())

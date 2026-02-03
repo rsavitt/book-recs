@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from sqlalchemy.orm import Session
 
 from app.models.book import Book, BookTag
 from app.schemas.book import BookResponse, BookSearchResult
@@ -22,7 +22,7 @@ def search_books(
     )
 
     if romantasy_only:
-        q = q.filter(Book.is_romantasy == True)
+        q = q.filter(Book.is_romantasy)
 
     books = q.order_by(Book.title).limit(limit).all()
 
@@ -50,7 +50,7 @@ def list_romantasy_books(
     offset: int = 0,
 ) -> list[BookSearchResult]:
     """List Romantasy books with filters."""
-    q = db.query(Book).filter(Book.is_romantasy == True)
+    q = db.query(Book).filter(Book.is_romantasy)
 
     if spice_level is not None:
         q = q.filter(Book.spice_level == spice_level)

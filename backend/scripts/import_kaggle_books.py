@@ -20,7 +20,6 @@ Usage:
 import csv
 import sys
 from pathlib import Path
-from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -30,9 +29,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import get_settings
 from app.core.database import Base
-from app.models.book import Book, BookTag
-from app.models.user import User
+from app.models.book import Book
 from app.models.rating import Rating
+from app.models.user import User
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -175,8 +174,8 @@ def create_sample_ratings(session, num_users: int = 100, ratings_per_user: int =
     """
     Create sample users with random ratings for testing recommendations.
     """
-    import random
     import hashlib
+    import random
 
     print(f"\nCreating {num_users} sample users with ratings...")
 
@@ -288,7 +287,7 @@ def main():
         print("DATABASE SUMMARY")
         print("=" * 50)
         print(f"Total books: {session.query(Book).count()}")
-        print(f"Romantasy books: {session.query(Book).filter(Book.is_romantasy == True).count()}")
+        print(f"Romantasy books: {session.query(Book).filter(Book.is_romantasy).count()}")
         print(f"Total users: {session.query(User).count()}")
         print(f"Total ratings: {session.query(Rating).count()}")
 

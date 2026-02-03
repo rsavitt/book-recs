@@ -1,7 +1,6 @@
 """Tests for book deduplication service."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from app.services.book_dedup import BookDeduplicator
 from app.services.csv_parser import ParsedBook

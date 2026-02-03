@@ -15,8 +15,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.services import auth_service
 from app.services.account_service import (
-    export_user_data,
     delete_user_account,
+    export_user_data,
     update_privacy_settings,
 )
 

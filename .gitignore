@@ -48,3 +48,4 @@ npm-debug.log*
 # Misc
 *.bak
 .cache/
+backend/scripts/data/

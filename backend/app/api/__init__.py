@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api import auth, users, books, imports, recommendations, admin, account, onboarding
+from app.api import account, admin, auth, books, imports, onboarding, recommendations, users
 
 router = APIRouter()
 
