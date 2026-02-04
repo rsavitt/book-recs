@@ -183,6 +183,82 @@ class TestExplanationGeneration:
         assert "readers" not in explanation
 
 
+class TestAlreadyReadFiltering:
+    """Test that already-read books are excluded from recommendations."""
+
+    def test_get_read_book_ids_returns_all_user_ratings(self):
+        """Should return all book IDs the user has rated, including rating=0."""
+        from unittest.mock import MagicMock
+
+        # Mock the database query
+        mock_db = MagicMock()
+        mock_ratings = [
+            MagicMock(book_id=1),  # Rated book
+            MagicMock(book_id=2),  # Rated book
+            MagicMock(book_id=3),  # Book marked as already_read (rating=0)
+        ]
+        mock_db.query.return_value.filter.return_value.all.return_value = mock_ratings
+
+        engine = RecommendationEngine.__new__(RecommendationEngine)
+        engine.db = mock_db
+        engine.user_id = 42
+
+        result = engine._get_read_book_ids()
+
+        assert result == {1, 2, 3}
+        # Verify query was made for the correct user
+        mock_db.query.assert_called()
+
+    def test_exclude_book_ids_filters_from_candidates(self):
+        """Ensure exclude_book_ids properly filters books from neighbor ratings query."""
+        # This tests that notin_() is called when exclude_book_ids is provided
+        from unittest.mock import MagicMock
+
+        mock_db = MagicMock()
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.join.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.all.return_value = []
+
+        engine = RecommendationEngine.__new__(RecommendationEngine)
+        engine.db = mock_db
+        engine.min_neighbors_for_rec = 2
+
+        # Call with exclude_book_ids
+        neighbors = [(100, 0.9), (101, 0.8)]
+        exclude_ids = {1, 2, 3}
+
+        engine._score_candidate_books(neighbors, exclude_ids)
+
+        # Verify filter was called (the notin_ should be applied)
+        assert mock_query.filter.call_count >= 2  # Initial filter + exclusion filter
+
+    def test_empty_exclude_book_ids_does_not_filter(self):
+        """When exclude_book_ids is empty, no exclusion filter should be applied."""
+        from unittest.mock import MagicMock
+
+        mock_db = MagicMock()
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.join.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.all.return_value = []
+
+        engine = RecommendationEngine.__new__(RecommendationEngine)
+        engine.db = mock_db
+        engine.min_neighbors_for_rec = 2
+
+        # Call with empty exclude_book_ids
+        neighbors = [(100, 0.9)]
+        exclude_ids = set()
+
+        engine._score_candidate_books(neighbors, exclude_ids)
+
+        # Should only have one filter call (the initial filters, no exclusion)
+        assert mock_query.filter.call_count == 1
+
+
 class TestScoringFormula:
     """Test the weighted average scoring formula."""
 

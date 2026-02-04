@@ -130,17 +130,21 @@ class RecommendationEngine:
         neighbor_sim = dict(neighbors)
 
         # Get all ratings from neighbors for Romantasy books
-        neighbor_ratings = (
+        query = (
             self.db.query(Rating.book_id, Rating.user_id, Rating.rating)
             .join(Book, Book.id == Rating.book_id)
             .filter(
                 Rating.user_id.in_(neighbor_ids),
                 Rating.rating > 0,
                 Book.is_romantasy,
-                ~Rating.book_id.in_(exclude_book_ids) if exclude_book_ids else True,
             )
-            .all()
         )
+
+        # Exclude books the user has already read
+        if exclude_book_ids:
+            query = query.filter(Rating.book_id.notin_(exclude_book_ids))
+
+        neighbor_ratings = query.all()
 
         # Group ratings by book
         book_ratings: dict[int, list[tuple[int, float, float]]] = defaultdict(list)
@@ -329,10 +333,11 @@ class RecommendationEngine:
         read_book_ids = self._get_read_book_ids()
 
         # Query for popular Romantasy books
-        query = self.db.query(Book).filter(
-            Book.is_romantasy,
-            ~Book.id.in_(read_book_ids) if read_book_ids else True,
-        )
+        query = self.db.query(Book).filter(Book.is_romantasy)
+
+        # Exclude books the user has already read
+        if read_book_ids:
+            query = query.filter(Book.id.notin_(read_book_ids))
 
         # Apply filters
         if self.filters.spice_min is not None:
