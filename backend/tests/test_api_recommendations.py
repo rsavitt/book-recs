@@ -35,7 +35,7 @@ class TestGetRecommendations:
         similarity = UserSimilarity(
             user_id=test_user.id,
             neighbor_id=other_user.id,
-            raw_similarity=0.9,
+            similarity_score=0.9,
             adjusted_similarity=0.7,
             overlap_count=3,
         )

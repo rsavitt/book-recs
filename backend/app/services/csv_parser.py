@@ -270,7 +270,7 @@ class GoodreadsCSVParser:
             Tuple of (clean_title, series_name, series_position)
         """
         # Pattern: "Title (Series Name, #N)" or "Title (Series Name #N)"
-        series_pattern = r"^(.+?)\s*\(([^,]+),?\s*#?([\d.]+)\)\s*$"
+        series_pattern = r"^(.+?)\s*\((.+?),?\s*#([\d.]+)\)\s*$"
         match = re.match(series_pattern, raw_title)
 
         if match:

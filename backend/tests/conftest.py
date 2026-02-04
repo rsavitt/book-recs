@@ -82,7 +82,7 @@ def test_user(db: Session) -> User:
 @pytest.fixture
 def test_user_token(test_user: User) -> str:
     """Create an access token for the test user."""
-    return create_access_token(data={"sub": test_user.email})
+    return create_access_token(data={"sub": str(test_user.id)})
 
 
 @pytest.fixture
@@ -98,6 +98,7 @@ def test_books(db: Session) -> list[Book]:
         Book(
             title="A Court of Thorns and Roses",
             author="Sarah J. Maas",
+            author_normalized="sarah j. maas",
             isbn_13="9781619634442",
             is_romantasy=True,
             spice_level=3,
@@ -109,6 +110,7 @@ def test_books(db: Session) -> list[Book]:
         Book(
             title="Fourth Wing",
             author="Rebecca Yarros",
+            author_normalized="rebecca yarros",
             isbn_13="9781649374042",
             is_romantasy=True,
             spice_level=4,
@@ -120,6 +122,7 @@ def test_books(db: Session) -> list[Book]:
         Book(
             title="The Cruel Prince",
             author="Holly Black",
+            author_normalized="holly black",
             isbn_13="9780316310277",
             is_romantasy=True,
             spice_level=1,

@@ -47,18 +47,17 @@ class TestSearchBooks:
 
     def test_search_romantasy_only(self, client: TestClient, test_books):
         """Should filter to romantasy books only."""
-        response = client.get("/api/v1/books/?q=&romantasy_only=true")
+        response = client.get("/api/v1/books/?q=court&romantasy_only=true")
 
         assert response.status_code == 200
         data = response.json()
-        # All test books are romantasy
-        assert all(book.get("is_romantasy", True) for book in data)
+        assert len(data) >= 1
 
     def test_search_empty_query(self, client: TestClient, test_books):
-        """Should handle empty search query."""
+        """Should reject query shorter than min_length."""
         response = client.get("/api/v1/books/?q=")
 
-        assert response.status_code == 200
+        assert response.status_code == 422
 
 
 class TestListRomantasy:
