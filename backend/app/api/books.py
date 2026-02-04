@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.book import BookResponse, BookSearchResult
 from app.services import book_service
+from app.services.trope_classifier import VectorTropeClassifier
 
 router = APIRouter()
 
@@ -60,3 +61,33 @@ async def get_book(
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     return book
+
+
+@router.get("/{book_id}/tropes")
+async def get_book_tropes(
+    book_id: int,
+    limit: int = Query(20, le=50),
+    db: Session = Depends(get_db),
+):
+    """Get trope classification scores for a book from vector analysis."""
+    book = book_service.get_book(db, book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    classifier = VectorTropeClassifier(db)
+    result = classifier.classify(book_id)
+
+    return {
+        "book_id": result.book_id,
+        "review_count": result.review_count,
+        "confidence": result.confidence,
+        "auto_tagged": result.auto_tagged,
+        "trope_scores": [
+            {
+                "trope_slug": ts.trope_slug,
+                "similarity_score": ts.similarity_score,
+                "auto_tagged": ts.auto_tagged,
+            }
+            for ts in result.trope_scores[:limit]
+        ],
+    }

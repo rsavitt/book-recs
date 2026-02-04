@@ -21,6 +21,7 @@ from app.data.tags import (
     normalize_shelf_to_tag,
 )
 from app.models.book import Book, BookTag
+from app.models.embedding import BookTropeScore
 from app.models.rating import Shelf
 
 
@@ -103,6 +104,13 @@ class RomantasyClassifier:
             confidence += author_confidence
             if author_reason:
                 reasons.append(author_reason)
+
+        # Check vector trope scores for romantasy-indicator tropes
+        vector_boost, vector_reasons, vector_tags = self._check_vector_tropes(book.id)
+        if vector_boost > 0:
+            confidence += vector_boost
+            reasons.extend(vector_reasons)
+            inferred_tags.extend(vector_tags)
 
         # Cap confidence at 0.95 for non-seed books
         confidence = min(confidence, 0.95)
@@ -189,6 +197,55 @@ class RomantasyClassifier:
             return self.AUTHOR_WEIGHT, f"Author '{author}' has other Romantasy books"
 
         return 0.0, None
+
+    # Trope slugs that indicate a book is likely romantasy
+    VECTOR_ROMANTASY_INDICATORS = {
+        "fae",
+        "dragons",
+        "dragon-riders",
+        "enemies-to-lovers",
+        "fated-mates",
+        "touch-her-and-die",
+        "magic-academy",
+    }
+
+    def _check_vector_tropes(self, book_id: int) -> tuple[float, list[str], list[str]]:
+        """
+        Check vector trope scores for romantasy-indicator tropes.
+
+        Boosts confidence by up to 0.3 if vector analysis found romantasy tropes.
+
+        Returns:
+            Tuple of (confidence_boost, reasons, inferred_tags)
+        """
+        auto_tagged = (
+            self.db.query(BookTropeScore)
+            .filter(
+                BookTropeScore.book_id == book_id,
+                BookTropeScore.auto_tagged.is_(True),
+            )
+            .all()
+        )
+
+        if not auto_tagged:
+            return 0.0, [], []
+
+        indicator_tropes = []
+        all_tropes = []
+
+        for score in auto_tagged:
+            all_tropes.append(score.trope_slug)
+            if score.trope_slug in self.VECTOR_ROMANTASY_INDICATORS:
+                indicator_tropes.append(score.trope_slug)
+
+        if not indicator_tropes:
+            return 0.0, [], all_tropes
+
+        # Boost: 0.1 per indicator trope, capped at 0.3
+        boost = min(len(indicator_tropes) * 0.1, 0.3)
+        reasons = [f"Vector analysis detected romantasy tropes: {', '.join(indicator_tropes)}"]
+
+        return boost, reasons, all_tropes
 
     def _load_romantasy_authors(self):
         """Load set of authors with confirmed Romantasy books."""

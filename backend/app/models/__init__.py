@@ -1,4 +1,5 @@
 from app.models.book import Book, BookEdition, BookTag
+from app.models.embedding import BookReviewEmbedding, BookTropeScore, TropeSeedEmbedding
 from app.models.rating import Rating, Shelf
 from app.models.reddit import BookRecommendationEdge, BookRedditMetrics
 from app.models.similarity import UserSimilarity
@@ -14,4 +15,7 @@ __all__ = [
     "UserSimilarity",
     "BookRedditMetrics",
     "BookRecommendationEdge",
+    "BookReviewEmbedding",
+    "TropeSeedEmbedding",
+    "BookTropeScore",
 ]

@@ -83,6 +83,9 @@ class Book(Base):
         back_populates="target_book",
         cascade="all, delete-orphan",
     )
+    review_embedding: Mapped["BookReviewEmbedding | None"] = relationship(
+        back_populates="book", cascade="all, delete-orphan", uselist=False
+    )
 
 
 class BookEdition(Base):
@@ -135,5 +138,6 @@ class BookTag(Base):
 
 
 # Forward references
+from app.models.embedding import BookReviewEmbedding  # noqa: E402
 from app.models.rating import Rating  # noqa: E402
 from app.models.reddit import BookRecommendationEdge, BookRedditMetrics  # noqa: E402

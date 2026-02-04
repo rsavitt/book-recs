@@ -46,3 +46,8 @@ python-dotenv==1.0.1
 # Reddit data collection
 praw>=7.7.0
 rapidfuzz>=3.0.0
+
+# Vector embeddings for trope classification
+sentence-transformers>=2.2.0
+pgvector>=0.2.4
+torch>=2.0.0

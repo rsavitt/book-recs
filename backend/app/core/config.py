@@ -65,6 +65,13 @@ class Settings(BaseSettings):
     REDDIT_SENTIMENT_BOOST: float = 0.05  # 5% rating boost for high sentiment
     REDDIT_MIN_MENTIONS_FOR_SIGNAL: int = 3  # Minimum mentions to trust data
 
+    # Vector embedding settings (for trope classification)
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_DIMENSION: int = 384
+    TROPE_SIMILARITY_THRESHOLD: float = 0.45
+    MIN_REVIEWS_FOR_EMBEDDING: int = 3
+    MAX_REVIEWS_PER_BOOK: int = 100
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Parse CORS origins from comma-separated string.
