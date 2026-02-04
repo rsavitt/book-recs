@@ -85,9 +85,7 @@ class TestGetRecommendations:
 class TestSubmitFeedback:
     """Test recommendation feedback endpoint."""
 
-    def test_submit_interested_feedback(
-        self, client: TestClient, auth_headers, test_books
-    ):
+    def test_submit_interested_feedback(self, client: TestClient, auth_headers, test_books):
         """Should accept 'interested' feedback."""
         book = test_books[2]  # A book the user hasn't rated
 
@@ -98,9 +96,7 @@ class TestSubmitFeedback:
 
         assert response.status_code == 200
 
-    def test_submit_not_interested_feedback(
-        self, client: TestClient, auth_headers, test_books
-    ):
+    def test_submit_not_interested_feedback(self, client: TestClient, auth_headers, test_books):
         """Should accept 'not_interested' feedback."""
         book = test_books[2]
 
@@ -111,9 +107,7 @@ class TestSubmitFeedback:
 
         assert response.status_code == 200
 
-    def test_submit_already_read_feedback(
-        self, client: TestClient, auth_headers, test_books
-    ):
+    def test_submit_already_read_feedback(self, client: TestClient, auth_headers, test_books):
         """Should accept 'already_read' feedback."""
         book = test_books[2]
 
@@ -124,9 +118,7 @@ class TestSubmitFeedback:
 
         assert response.status_code == 200
 
-    def test_submit_invalid_feedback(
-        self, client: TestClient, auth_headers, test_books
-    ):
+    def test_submit_invalid_feedback(self, client: TestClient, auth_headers, test_books):
         """Should reject invalid feedback value."""
         book = test_books[0]
 
@@ -141,8 +133,6 @@ class TestSubmitFeedback:
         """Should reject unauthenticated feedback."""
         book = test_books[0]
 
-        response = client.post(
-            f"/api/v1/recommendations/{book.id}/feedback?feedback=interested"
-        )
+        response = client.post(f"/api/v1/recommendations/{book.id}/feedback?feedback=interested")
 
         assert response.status_code == 401

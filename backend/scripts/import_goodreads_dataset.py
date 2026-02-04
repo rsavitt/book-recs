@@ -44,22 +44,73 @@ DATA_DIR = Path(__file__).parent / "data"
 
 # Romantasy indicators - books with these in title/description are likely romantasy
 ROMANTASY_TITLE_KEYWORDS = [
-    "fae", "faerie", "fairy", "dragon", "kingdom", "throne", "crown", "prince",
-    "princess", "queen", "king", "witch", "magic", "curse", "court", "realm",
-    "shadow", "blood", "night", "dark", "moon", "star", "wings", "immortal",
-    "vampire", "wolf", "mate", "bond", "chosen", "prophecy", "warrior"
+    "fae",
+    "faerie",
+    "fairy",
+    "dragon",
+    "kingdom",
+    "throne",
+    "crown",
+    "prince",
+    "princess",
+    "queen",
+    "king",
+    "witch",
+    "magic",
+    "curse",
+    "court",
+    "realm",
+    "shadow",
+    "blood",
+    "night",
+    "dark",
+    "moon",
+    "star",
+    "wings",
+    "immortal",
+    "vampire",
+    "wolf",
+    "mate",
+    "bond",
+    "chosen",
+    "prophecy",
+    "warrior",
 ]
 
 # Known romantasy authors
 ROMANTASY_AUTHORS = [
-    "sarah j. maas", "jennifer l. armentrout", "rebecca yarros", "holly black",
-    "carissa broadbent", "elise kova", "kerri maniscalco", "raven kennedy",
-    "scarlett st. clair", "laura thalassa", "k.a. tucker", "brigid kemmerer",
-    "leigh bardugo", "kresley cole", "ilona andrews", "nalini singh",
-    "grace draven", "kathryn ann kingsley", "ruby dixon", "a.k. caggiano",
-    "c.n. crawford", "k.m. shea", "amelia hutchins", "jaymin eve",
-    "leia stone", "kelly st. clare", "stacia stark", "kate & the couch",
-    "c. rochelle", "j. bree", "mariana zapata", "penelope douglas"
+    "sarah j. maas",
+    "jennifer l. armentrout",
+    "rebecca yarros",
+    "holly black",
+    "carissa broadbent",
+    "elise kova",
+    "kerri maniscalco",
+    "raven kennedy",
+    "scarlett st. clair",
+    "laura thalassa",
+    "k.a. tucker",
+    "brigid kemmerer",
+    "leigh bardugo",
+    "kresley cole",
+    "ilona andrews",
+    "nalini singh",
+    "grace draven",
+    "kathryn ann kingsley",
+    "ruby dixon",
+    "a.k. caggiano",
+    "c.n. crawford",
+    "k.m. shea",
+    "amelia hutchins",
+    "jaymin eve",
+    "leia stone",
+    "kelly st. clare",
+    "stacia stark",
+    "kate & the couch",
+    "c. rochelle",
+    "j. bree",
+    "mariana zapata",
+    "penelope douglas",
 ]
 
 # Tropes to look for in shelves/tags
@@ -68,7 +119,12 @@ ROMANTASY_TROPES = {
     "fated-mates": ["fated mates", "fated-mates", "mate bond", "soulmates", "soul mates"],
     "slow-burn": ["slow burn", "slow-burn", "slowburn"],
     "forced-proximity": ["forced proximity", "forced-proximity", "stuck together"],
-    "fake-relationship": ["fake relationship", "fake-relationship", "fake dating", "pretend relationship"],
+    "fake-relationship": [
+        "fake relationship",
+        "fake-relationship",
+        "fake dating",
+        "pretend relationship",
+    ],
     "morally-gray": ["morally grey", "morally gray", "villain", "antihero", "dark hero"],
     "found-family": ["found family", "found-family", "chosen family"],
     "fae": ["fae", "faerie", "fairy", "faeries", "fae romance"],
@@ -93,13 +149,18 @@ def download_file(url: str, dest_path: Path) -> bool:
 
     print(f"  Downloading: {url}")
     try:
+
         def reporthook(block_num, block_size, total_size):
             downloaded = block_num * block_size
             if total_size > 0:
                 percent = min(100, downloaded * 100 / total_size)
                 mb_downloaded = downloaded / (1024 * 1024)
                 mb_total = total_size / (1024 * 1024)
-                print(f"\r    {percent:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)", end="", flush=True)
+                print(
+                    f"\r    {percent:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)",
+                    end="",
+                    flush=True,
+                )
 
         urllib.request.urlretrieve(url, dest_path, reporthook)
         print()  # newline after progress
@@ -111,7 +172,7 @@ def download_file(url: str, dest_path: Path) -> bool:
 
 def read_gzip_json_lines(file_path: Path):
     """Read a gzipped JSON lines file."""
-    with gzip.open(file_path, 'rt', encoding='utf-8') as f:
+    with gzip.open(file_path, "rt", encoding="utf-8") as f:
         for line in f:
             try:
                 yield json.loads(line)
@@ -122,9 +183,10 @@ def read_gzip_json_lines(file_path: Path):
 def normalize_author(author: str) -> str:
     """Normalize author name for matching."""
     import unicodedata
+
     # Remove accents
-    normalized = unicodedata.normalize('NFKD', author)
-    normalized = ''.join(c for c in normalized if not unicodedata.combining(c))
+    normalized = unicodedata.normalize("NFKD", author)
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
     # Lowercase and strip
     return normalized.lower().strip()
 
@@ -135,7 +197,9 @@ def is_likely_romantasy(book: dict) -> tuple[bool, float, list[str]]:
     Returns (is_romantasy, confidence, matched_tropes)
     """
     title = book.get("title", "").lower()
-    author = normalize_author(book.get("authors", [{}])[0].get("author_id", "") if book.get("authors") else "")
+    author = normalize_author(
+        book.get("authors", [{}])[0].get("author_id", "") if book.get("authors") else ""
+    )
     description = book.get("description", "").lower() if book.get("description") else ""
     shelves = [s.get("name", "").lower() for s in book.get("popular_shelves", [])]
 
@@ -173,7 +237,9 @@ def is_likely_romantasy(book: dict) -> tuple[bool, float, list[str]]:
                 break
 
     # Check if it's in both fantasy and romance shelves
-    has_fantasy = any(s in ["fantasy", "paranormal", "urban-fantasy", "epic-fantasy"] for s in shelves)
+    has_fantasy = any(
+        s in ["fantasy", "paranormal", "urban-fantasy", "epic-fantasy"] for s in shelves
+    )
     has_romance = any(s in ["romance", "love", "romantic"] for s in shelves)
     if has_fantasy and has_romance:
         confidence += 0.2
@@ -240,7 +306,8 @@ def extract_series_info(book: dict) -> tuple[str | None, float | None]:
 
     # Try to parse from title (common pattern: "Title (Series Name #1)")
     import re
-    match = re.search(r'\(([^#]+)#?(\d+\.?\d*)?\)', title)
+
+    match = re.search(r"\(([^#]+)#?(\d+\.?\d*)?\)", title)
     if match:
         series_name = match.group(1).strip()
         position = float(match.group(2)) if match.group(2) else None
@@ -258,7 +325,7 @@ def get_or_create_tag(session, tag_name: str, category: str = "trope") -> BookTa
             name=tag_name.replace("-", " ").title(),
             slug=slug,
             category=category,
-            is_romantasy_indicator=(category == "trope")
+            is_romantasy_indicator=(category == "trope"),
         )
         session.add(tag)
         session.flush()
@@ -280,7 +347,11 @@ def import_books(session, data_dir: Path, limit: int | None = None) -> dict[str,
     romantasy_count = 0
 
     for genre in ["fantasy", "romance"]:
-        file_path = data_dir / f"goodreads_books_{genre}_paranormal.json.gz" if genre == "fantasy" else data_dir / f"goodreads_books_{genre}.json.gz"
+        file_path = (
+            data_dir / f"goodreads_books_{genre}_paranormal.json.gz"
+            if genre == "fantasy"
+            else data_dir / f"goodreads_books_{genre}.json.gz"
+        )
 
         if not file_path.exists():
             print(f"  Skipping {genre} - file not found")
@@ -294,7 +365,9 @@ def import_books(session, data_dir: Path, limit: int | None = None) -> dict[str,
 
             books_processed += 1
             if books_processed % 10000 == 0:
-                print(f"    Processed {books_processed} books, found {romantasy_count} romantasy...")
+                print(
+                    f"    Processed {books_processed} books, found {romantasy_count} romantasy..."
+                )
 
             # Check if it's romantasy
             is_romantasy, confidence, tropes = is_likely_romantasy(book_data)
@@ -310,9 +383,11 @@ def import_books(session, data_dir: Path, limit: int | None = None) -> dict[str,
                 continue
 
             # Check if book already exists by goodreads_id
-            existing_edition = session.query(BookEdition).filter(
-                BookEdition.goodreads_book_id == goodreads_id
-            ).first()
+            existing_edition = (
+                session.query(BookEdition)
+                .filter(BookEdition.goodreads_book_id == goodreads_id)
+                .first()
+            )
             if existing_edition:
                 book_id_map[goodreads_id] = existing_edition.book_id
                 continue
@@ -335,10 +410,18 @@ def import_books(session, data_dir: Path, limit: int | None = None) -> dict[str,
                 title=title[:500],  # Truncate to fit
                 author=author[:255] if author else "Unknown",
                 author_normalized=normalize_author(author)[:255] if author else "unknown",
-                description=book_data.get("description", "")[:5000] if book_data.get("description") else None,
+                description=(
+                    book_data.get("description", "")[:5000]
+                    if book_data.get("description")
+                    else None
+                ),
                 cover_url=book_data.get("image_url"),
                 page_count=int(book_data.get("num_pages")) if book_data.get("num_pages") else None,
-                publication_year=int(book_data.get("publication_year")) if book_data.get("publication_year") else None,
+                publication_year=(
+                    int(book_data.get("publication_year"))
+                    if book_data.get("publication_year")
+                    else None
+                ),
                 series_name=series_name[:255] if series_name else None,
                 series_position=series_position,
                 is_romantasy=True,
@@ -397,7 +480,11 @@ def import_ratings(session, data_dir: Path, book_id_map: dict[str, int], max_use
     rating_count = 0
 
     for genre in ["fantasy", "romance"]:
-        file_path = data_dir / f"goodreads_interactions_{genre}_paranormal.json.gz" if genre == "fantasy" else data_dir / f"goodreads_interactions_{genre}.json.gz"
+        file_path = (
+            data_dir / f"goodreads_interactions_{genre}_paranormal.json.gz"
+            if genre == "fantasy"
+            else data_dir / f"goodreads_interactions_{genre}.json.gz"
+        )
 
         if not file_path.exists():
             print(f"  Skipping {genre} interactions - file not found")
@@ -426,6 +513,7 @@ def import_ratings(session, data_dir: Path, book_id_map: dict[str, int], max_use
                 # Create synthetic user
                 # Use a hash of the goodreads ID for privacy
                 import hashlib
+
                 user_hash = hashlib.md5(user_id.encode()).hexdigest()[:8]
                 username = f"reader_{user_hash}"
                 email = f"{username}@imported.local"
@@ -450,10 +538,11 @@ def import_ratings(session, data_dir: Path, book_id_map: dict[str, int], max_use
             our_user_id = user_id_map[user_id]
 
             # Check if rating already exists
-            existing = session.query(Rating).filter(
-                Rating.user_id == our_user_id,
-                Rating.book_id == our_book_id
-            ).first()
+            existing = (
+                session.query(Rating)
+                .filter(Rating.user_id == our_user_id, Rating.book_id == our_book_id)
+                .first()
+            )
 
             if existing:
                 continue
@@ -463,7 +552,7 @@ def import_ratings(session, data_dir: Path, book_id_map: dict[str, int], max_use
                 user_id=our_user_id,
                 book_id=our_book_id,
                 rating=min(5, max(1, int(rating))),  # Ensure 1-5 range
-                source="goodreads_dataset"
+                source="goodreads_dataset",
             )
             session.add(rating_obj)
             rating_count += 1
@@ -516,7 +605,9 @@ def main():
         # Import ratings
         print("\n4. Importing ratings...")
         max_users = int(os.environ.get("MAX_USERS", "10000"))
-        rating_count, user_count = import_ratings(session, DATA_DIR, book_id_map, max_users=max_users)
+        rating_count, user_count = import_ratings(
+            session, DATA_DIR, book_id_map, max_users=max_users
+        )
 
         # Print summary
         print("\n" + "=" * 60)

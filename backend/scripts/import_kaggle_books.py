@@ -37,28 +37,60 @@ DATA_DIR = Path(__file__).parent / "data"
 
 # Romantasy keywords for filtering
 ROMANTASY_KEYWORDS = [
-    "romantasy", "fantasy romance", "romantic fantasy",
-    "fae", "faerie", "dragon", "witch", "magic", "kingdom",
-    "throne", "crown", "vampire", "shifter", "mate", "bond",
-    "court", "immortal", "wings", "shadow", "dark"
+    "romantasy",
+    "fantasy romance",
+    "romantic fantasy",
+    "fae",
+    "faerie",
+    "dragon",
+    "witch",
+    "magic",
+    "kingdom",
+    "throne",
+    "crown",
+    "vampire",
+    "shifter",
+    "mate",
+    "bond",
+    "court",
+    "immortal",
+    "wings",
+    "shadow",
+    "dark",
 ]
 
 ROMANTASY_AUTHORS = {
-    "sarah j. maas", "jennifer l. armentrout", "rebecca yarros",
-    "holly black", "carissa broadbent", "elise kova",
-    "kerri maniscalco", "raven kennedy", "scarlett st. clair",
-    "laura thalassa", "leigh bardugo", "kresley cole",
-    "ilona andrews", "nalini singh", "grace draven",
-    "ruby dixon", "jaymin eve", "leia stone", "j. bree",
-    "penelope douglas", "kathryn ann kingsley", "k.m. shea"
+    "sarah j. maas",
+    "jennifer l. armentrout",
+    "rebecca yarros",
+    "holly black",
+    "carissa broadbent",
+    "elise kova",
+    "kerri maniscalco",
+    "raven kennedy",
+    "scarlett st. clair",
+    "laura thalassa",
+    "leigh bardugo",
+    "kresley cole",
+    "ilona andrews",
+    "nalini singh",
+    "grace draven",
+    "ruby dixon",
+    "jaymin eve",
+    "leia stone",
+    "j. bree",
+    "penelope douglas",
+    "kathryn ann kingsley",
+    "k.m. shea",
 }
 
 
 def normalize_author(author: str) -> str:
     """Normalize author name."""
     import unicodedata
-    normalized = unicodedata.normalize('NFKD', author)
-    normalized = ''.join(c for c in normalized if not unicodedata.combining(c))
+
+    normalized = unicodedata.normalize("NFKD", author)
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
     return normalized.lower().strip()
 
 
@@ -98,28 +130,32 @@ def import_goodreads_books_csv(session, file_path: Path) -> int:
     imported = 0
     skipped = 0
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
 
         for row in reader:
-            title = row.get('title', row.get('Title', ''))
-            author = row.get('authors', row.get('Author', row.get('author', '')))
+            title = row.get("title", row.get("Title", ""))
+            author = row.get("authors", row.get("Author", row.get("author", "")))
 
             if not title or not author:
                 skipped += 1
                 continue
 
             # Check if romantasy (be permissive for this import)
-            genres = row.get('genres', row.get('shelves', ''))
+            genres = row.get("genres", row.get("shelves", ""))
             if not is_romantasy(title, author, genres):
                 skipped += 1
                 continue
 
             # Check for duplicates
-            existing = session.query(Book).filter(
-                Book.title == title[:500],
-                Book.author_normalized == normalize_author(author)[:255]
-            ).first()
+            existing = (
+                session.query(Book)
+                .filter(
+                    Book.title == title[:500],
+                    Book.author_normalized == normalize_author(author)[:255],
+                )
+                .first()
+            )
 
             if existing:
                 skipped += 1
@@ -127,7 +163,9 @@ def import_goodreads_books_csv(session, file_path: Path) -> int:
 
             # Parse year
             pub_year = None
-            year_str = row.get('publication_year', row.get('Year', row.get('original_publication_year', '')))
+            year_str = row.get(
+                "publication_year", row.get("Year", row.get("original_publication_year", ""))
+            )
             if year_str:
                 try:
                     pub_year = int(float(year_str))
@@ -138,7 +176,7 @@ def import_goodreads_books_csv(session, file_path: Path) -> int:
 
             # Parse page count
             pages = None
-            pages_str = row.get('num_pages', row.get('pages', row.get('  num_pages', '')))
+            pages_str = row.get("num_pages", row.get("pages", row.get("  num_pages", "")))
             if pages_str:
                 try:
                     pages = int(float(pages_str))
@@ -148,10 +186,10 @@ def import_goodreads_books_csv(session, file_path: Path) -> int:
             # Create book
             book = Book(
                 title=title[:500],
-                author=author.split(',')[0].strip()[:255],  # First author only
+                author=author.split(",")[0].strip()[:255],  # First author only
                 author_normalized=normalize_author(author)[:255],
-                isbn_13=row.get('isbn13', '')[:13] if row.get('isbn13') else None,
-                isbn_10=row.get('isbn', '')[:10] if row.get('isbn') else None,
+                isbn_13=row.get("isbn13", "")[:13] if row.get("isbn13") else None,
+                isbn_10=row.get("isbn", "")[:10] if row.get("isbn") else None,
                 page_count=pages,
                 publication_year=pub_year,
                 is_romantasy=True,
@@ -216,10 +254,7 @@ def create_sample_ratings(session, num_users: int = 100, ratings_per_user: int =
             rating_value = random.choices([1, 2, 3, 4, 5], weights=[5, 10, 20, 35, 30])[0]
 
             rating = Rating(
-                user_id=user.id,
-                book_id=book_id,
-                rating=rating_value,
-                source="sample_data"
+                user_id=user.id, book_id=book_id, rating=rating_value, source="sample_data"
             )
             session.add(rating)
             rating_count += 1
@@ -279,7 +314,7 @@ def main():
         if book_count > 0 and user_count < 50:
             print(f"\nFound {book_count} books but only {user_count} sample users.")
             response = input("Create sample users with ratings for testing? (y/n): ")
-            if response.lower() == 'y':
+            if response.lower() == "y":
                 create_sample_ratings(session, num_users=100, ratings_per_user=30)
 
         # Summary

@@ -128,7 +128,9 @@ def get_similar_users(db: Session, user_id: int, limit: int = 20) -> list[Simila
     return results
 
 
-def _get_shared_favorites(db: Session, user_id: int, neighbor_id: int, min_rating: int = 4) -> list[str]:
+def _get_shared_favorites(
+    db: Session, user_id: int, neighbor_id: int, min_rating: int = 4
+) -> list[str]:
     """Get books that both users rated highly."""
     user_favorites = (
         db.query(Rating.book_id)

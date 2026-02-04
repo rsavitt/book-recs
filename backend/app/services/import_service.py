@@ -138,9 +138,7 @@ def _process_books(
                 _import_status[import_id]["message"] = f"Processing books ({i + 1}/{total})..."
 
         except Exception as e:
-            _import_status[import_id]["errors"].append(
-                f"Book '{parsed.title}': {str(e)}"
-            )
+            _import_status[import_id]["errors"].append(f"Book '{parsed.title}': {str(e)}")
             _import_status[import_id]["books_skipped"] += 1
 
     # Final commit
@@ -186,11 +184,7 @@ def _create_or_update_rating(
 ) -> Rating:
     """Create or update a rating record."""
     # Check for existing rating
-    existing = (
-        db.query(Rating)
-        .filter(Rating.user_id == user_id, Rating.book_id == book_id)
-        .first()
-    )
+    existing = db.query(Rating).filter(Rating.user_id == user_id, Rating.book_id == book_id).first()
 
     if existing:
         # Update if the imported rating is newer or has more data

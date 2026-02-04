@@ -17,15 +17,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/lo
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     # bcrypt has a 72 byte limit, truncate if necessary
-    password_bytes = plain_password.encode('utf-8')[:72]
-    return bcrypt.checkpw(password_bytes, hashed_password.encode('utf-8'))
+    password_bytes = plain_password.encode("utf-8")[:72]
+    return bcrypt.checkpw(password_bytes, hashed_password.encode("utf-8"))
 
 
 def get_password_hash(password: str) -> str:
     # bcrypt has a 72 byte limit, truncate if necessary
-    password_bytes = password.encode('utf-8')[:72]
+    password_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:

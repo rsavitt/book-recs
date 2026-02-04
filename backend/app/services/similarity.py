@@ -348,9 +348,7 @@ class BatchSimilarityComputer:
 
         return user_ids, book_ids, matrix
 
-    def _compute_similarity_matrix(
-        self, ratings_matrix: sparse.csr_matrix
-    ) -> np.ndarray:
+    def _compute_similarity_matrix(self, ratings_matrix: sparse.csr_matrix) -> np.ndarray:
         """
         Compute pairwise cosine similarity matrix.
 
@@ -427,9 +425,7 @@ class BatchSimilarityComputer:
         results.sort(key=lambda x: x.adjusted_similarity, reverse=True)
         return results[: self.max_neighbors]
 
-    def _save_user_similarities(
-        self, user_id: int, similarities: list[SimilarityResult]
-    ):
+    def _save_user_similarities(self, user_id: int, similarities: list[SimilarityResult]):
         """Save similarities for a user."""
         # Delete existing
         self.db.query(UserSimilarity).filter(UserSimilarity.user_id == user_id).delete()

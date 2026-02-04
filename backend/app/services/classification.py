@@ -117,9 +117,7 @@ class RomantasyClassifier:
             inferred_tags=list(set(inferred_tags)),
         )
 
-    def _analyze_shelf_signals(
-        self, book_id: int
-    ) -> tuple[float, list[str], list[str]]:
+    def _analyze_shelf_signals(self, book_id: int) -> tuple[float, list[str], list[str]]:
         """
         Analyze user shelves to determine Romantasy likelihood.
 
@@ -318,7 +316,9 @@ class WhyChooseClassifier:
             # Moderate signal: users shelved with poly/multiple-mates
             confidence += min(supporting_count * self.SHELF_SUPPORTING_WEIGHT, 0.6)
             if not reasons:  # Only add if no stronger reason
-                reasons.append(f"{supporting_count} user(s) shelved with polyamory/multiple-mates tags")
+                reasons.append(
+                    f"{supporting_count} user(s) shelved with polyamory/multiple-mates tags"
+                )
 
         return confidence, reasons
 
@@ -405,11 +405,7 @@ def reclassify_all_books(db: Session, min_confidence: float = 0.6) -> dict:
     }
 
     # Get all books not in seed list (seed list books keep their classification)
-    books = (
-        db.query(Book)
-        .filter(Book.romantasy_confidence < 0.95)  # Exclude seed list
-        .all()
-    )
+    books = db.query(Book).filter(Book.romantasy_confidence < 0.95).all()  # Exclude seed list
 
     for book in books:
         stats["total_books"] += 1
@@ -526,10 +522,14 @@ def get_classification_stats(db: Session) -> dict:
     return {
         "total_books": total_books,
         "romantasy_books": romantasy_books,
-        "romantasy_percentage": round(romantasy_books / total_books * 100, 1) if total_books > 0 else 0,
+        "romantasy_percentage": (
+            round(romantasy_books / total_books * 100, 1) if total_books > 0 else 0
+        ),
         "high_confidence_count": high_confidence,
         "seed_list_count": seed_list,
         "why_choose_books": why_choose_books,
-        "why_choose_percentage": round(why_choose_books / total_books * 100, 1) if total_books > 0 else 0,
+        "why_choose_percentage": (
+            round(why_choose_books / total_books * 100, 1) if total_books > 0 else 0
+        ),
         "why_choose_high_confidence": why_choose_high_confidence,
     }

@@ -49,8 +49,8 @@ def main():
         print(f"Users skipped (not enough data): {stats['users_skipped']}")
         print(f"Total similarities computed: {stats['similarities_computed']}")
 
-        if stats['users_processed'] > 0:
-            avg_neighbors = stats['similarities_computed'] / stats['users_processed']
+        if stats["users_processed"] > 0:
+            avg_neighbors = stats["similarities_computed"] / stats["users_processed"]
             print(f"Average neighbors per user: {avg_neighbors:.1f}")
 
         print("\n✓ Batch job complete!")

@@ -70,9 +70,7 @@ class OpenLibraryClient:
         except Exception:
             return None
 
-    async def search_by_title_author(
-        self, title: str, author: str
-    ) -> BookMetadata | None:
+    async def search_by_title_author(self, title: str, author: str) -> BookMetadata | None:
         """
         Search for a book by title and author.
 
@@ -225,9 +223,7 @@ class GoogleBooksClient:
         """
         return await self._search(f"isbn:{isbn}")
 
-    async def search_by_title_author(
-        self, title: str, author: str
-    ) -> BookMetadata | None:
+    async def search_by_title_author(self, title: str, author: str) -> BookMetadata | None:
         """
         Search for a book by title and author.
 
@@ -338,9 +334,7 @@ class MetadataEnricher:
 
         return self._merge_metadata(ol_result, gb_result)
 
-    async def enrich_by_title_author(
-        self, title: str, author: str
-    ) -> BookMetadata | None:
+    async def enrich_by_title_author(self, title: str, author: str) -> BookMetadata | None:
         """
         Enrich book metadata by title and author, trying multiple sources.
 
@@ -360,9 +354,7 @@ class MetadataEnricher:
         return self._merge_metadata(ol_result, gb_result)
 
     @staticmethod
-    def _merge_metadata(
-        ol: BookMetadata | None, gb: BookMetadata | None
-    ) -> BookMetadata | None:
+    def _merge_metadata(ol: BookMetadata | None, gb: BookMetadata | None) -> BookMetadata | None:
         """
         Merge metadata from multiple sources.
 
@@ -393,9 +385,7 @@ class MetadataEnricher:
         )
 
 
-def _merge_lists(
-    list1: list[str] | None, list2: list[str] | None
-) -> list[str] | None:
+def _merge_lists(list1: list[str] | None, list2: list[str] | None) -> list[str] | None:
     """Merge two lists, removing duplicates."""
     if not list1 and not list2:
         return None
@@ -421,6 +411,7 @@ def enrich_book_metadata_sync(
     Returns:
         BookMetadata if found, None otherwise
     """
+
     async def _enrich():
         enricher = MetadataEnricher()
         try:

@@ -38,29 +38,65 @@ UCSD_URLS = {
 
 # Romantasy detection
 ROMANTASY_AUTHORS = {
-    "sarah j. maas", "jennifer l. armentrout", "rebecca yarros",
-    "holly black", "carissa broadbent", "elise kova",
-    "kerri maniscalco", "raven kennedy", "scarlett st. clair",
-    "laura thalassa", "leigh bardugo", "kresley cole",
-    "ilona andrews", "nalini singh", "grace draven",
-    "ruby dixon", "jaymin eve", "leia stone", "j. bree",
-    "penelope douglas", "kathryn ann kingsley", "k.m. shea",
-    "amelia hutchins", "c.n. crawford", "stacia stark",
-    "kelly st. clare", "emma hamm", "k.a. tucker",
+    "sarah j. maas",
+    "jennifer l. armentrout",
+    "rebecca yarros",
+    "holly black",
+    "carissa broadbent",
+    "elise kova",
+    "kerri maniscalco",
+    "raven kennedy",
+    "scarlett st. clair",
+    "laura thalassa",
+    "leigh bardugo",
+    "kresley cole",
+    "ilona andrews",
+    "nalini singh",
+    "grace draven",
+    "ruby dixon",
+    "jaymin eve",
+    "leia stone",
+    "j. bree",
+    "penelope douglas",
+    "kathryn ann kingsley",
+    "k.m. shea",
+    "amelia hutchins",
+    "c.n. crawford",
+    "stacia stark",
+    "kelly st. clare",
+    "emma hamm",
+    "k.a. tucker",
 }
 
 ROMANTASY_KEYWORDS = [
-    "fae", "faerie", "dragon", "kingdom", "throne", "crown",
-    "witch", "magic", "curse", "court", "realm", "shadow",
-    "vampire", "wolf", "mate", "bond", "wings", "immortal",
-    "romantasy", "fantasy romance",
+    "fae",
+    "faerie",
+    "dragon",
+    "kingdom",
+    "throne",
+    "crown",
+    "witch",
+    "magic",
+    "curse",
+    "court",
+    "realm",
+    "shadow",
+    "vampire",
+    "wolf",
+    "mate",
+    "bond",
+    "wings",
+    "immortal",
+    "romantasy",
+    "fantasy romance",
 ]
 
 
 def normalize_author(author: str) -> str:
     import unicodedata
-    normalized = unicodedata.normalize('NFKD', author)
-    normalized = ''.join(c for c in normalized if not unicodedata.combining(c))
+
+    normalized = unicodedata.normalize("NFKD", author)
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
     return normalized.lower().strip()
 
 
@@ -103,6 +139,7 @@ def download_file(url: str, dest: Path) -> bool:
 
     print(f"  Downloading: {url}")
     try:
+
         def reporthook(block_num, block_size, total_size):
             downloaded = block_num * block_size
             if total_size > 0:
@@ -120,7 +157,7 @@ def download_file(url: str, dest: Path) -> bool:
 
 def read_gzip_json_lines(file_path: Path) -> Iterator[dict]:
     """Read gzipped JSON lines file."""
-    with gzip.open(file_path, 'rt', encoding='utf-8') as f:
+    with gzip.open(file_path, "rt", encoding="utf-8") as f:
         for line in f:
             try:
                 yield json.loads(line)
@@ -161,25 +198,33 @@ def process_ucsd_books(data_dir: Path, limit: int = 2000) -> list[dict]:
         if not goodreads_id:
             continue
 
-        books.append({
-            "title": title[:500],
-            "author": author[:255],
-            "goodreads_id": goodreads_id,
-            "isbn_13": book_data.get("isbn13"),
-            "isbn_10": book_data.get("isbn"),
-            "description": (book_data.get("description") or "")[:5000] or None,
-            "cover_url": book_data.get("image_url"),
-            "page_count": int(book_data["num_pages"]) if book_data.get("num_pages") else None,
-            "publication_year": int(book_data["publication_year"]) if book_data.get("publication_year") else None,
-            "is_romantasy": True,
-            "romantasy_confidence": confidence,
-        })
+        books.append(
+            {
+                "title": title[:500],
+                "author": author[:255],
+                "goodreads_id": goodreads_id,
+                "isbn_13": book_data.get("isbn13"),
+                "isbn_10": book_data.get("isbn"),
+                "description": (book_data.get("description") or "")[:5000] or None,
+                "cover_url": book_data.get("image_url"),
+                "page_count": int(book_data["num_pages"]) if book_data.get("num_pages") else None,
+                "publication_year": (
+                    int(book_data["publication_year"])
+                    if book_data.get("publication_year")
+                    else None
+                ),
+                "is_romantasy": True,
+                "romantasy_confidence": confidence,
+            }
+        )
 
     print(f"Found {len(books)} romantasy books")
     return books
 
 
-def process_ucsd_interactions(data_dir: Path, book_ids: set[str], max_users: int = 5000) -> tuple[list[dict], list[dict]]:
+def process_ucsd_interactions(
+    data_dir: Path, book_ids: set[str], max_users: int = 5000
+) -> tuple[list[dict], list[dict]]:
     """Process UCSD interactions for the given book IDs."""
     interactions_file = data_dir / "goodreads_interactions_romance.json.gz"
 
@@ -210,11 +255,13 @@ def process_ucsd_interactions(data_dir: Path, book_ids: set[str], max_users: int
                 continue
             users[user_id] = {"external_id": user_id}
 
-        ratings.append({
-            "external_user_id": user_id,
-            "goodreads_book_id": book_id,
-            "rating": min(5, max(1, int(rating))),
-        })
+        ratings.append(
+            {
+                "external_user_id": user_id,
+                "goodreads_book_id": book_id,
+                "rating": min(5, max(1, int(rating))),
+            }
+        )
 
     print(f"Found {len(users)} users with {len(ratings)} ratings")
     return list(users.values()), ratings
@@ -225,12 +272,12 @@ def process_kaggle_csv(csv_path: Path) -> list[dict]:
     print(f"Processing CSV: {csv_path}")
     books = []
 
-    with open(csv_path, 'r', encoding='utf-8') as f:
+    with open(csv_path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
 
         for row in reader:
-            title = row.get('title', row.get('Title', ''))
-            author = row.get('authors', row.get('Author', row.get('author', '')))
+            title = row.get("title", row.get("Title", ""))
+            author = row.get("authors", row.get("Author", row.get("author", "")))
 
             if not title or not author:
                 continue
@@ -241,7 +288,9 @@ def process_kaggle_csv(csv_path: Path) -> list[dict]:
 
             # Parse year
             pub_year = None
-            year_str = row.get('publication_year', row.get('Year', row.get('original_publication_year', '')))
+            year_str = row.get(
+                "publication_year", row.get("Year", row.get("original_publication_year", ""))
+            )
             if year_str:
                 try:
                     pub_year = int(float(year_str))
@@ -252,23 +301,25 @@ def process_kaggle_csv(csv_path: Path) -> list[dict]:
 
             # Parse pages
             pages = None
-            pages_str = row.get('num_pages', row.get('pages', ''))
+            pages_str = row.get("num_pages", row.get("pages", ""))
             if pages_str:
                 try:
                     pages = int(float(pages_str))
                 except (ValueError, TypeError):
                     pass
 
-            books.append({
-                "title": title[:500],
-                "author": author.split(',')[0].strip()[:255],
-                "isbn_13": row.get('isbn13', '')[:13] or None,
-                "isbn_10": row.get('isbn', '')[:10] or None,
-                "page_count": pages,
-                "publication_year": pub_year,
-                "is_romantasy": True,
-                "romantasy_confidence": confidence,
-            })
+            books.append(
+                {
+                    "title": title[:500],
+                    "author": author.split(",")[0].strip()[:255],
+                    "isbn_13": row.get("isbn13", "")[:13] or None,
+                    "isbn_10": row.get("isbn", "")[:10] or None,
+                    "page_count": pages,
+                    "publication_year": pub_year,
+                    "is_romantasy": True,
+                    "romantasy_confidence": confidence,
+                }
+            )
 
     print(f"Found {len(books)} romantasy books in CSV")
     return books
@@ -280,7 +331,7 @@ def upload_books(api_url: str, books: list[dict], batch_size: int = 100) -> int:
     url = f"{api_url}/api/v1/admin/bulk/books"
 
     for i in range(0, len(books), batch_size):
-        batch = books[i:i + batch_size]
+        batch = books[i : i + batch_size]
         print(f"  Uploading books {i+1}-{i+len(batch)}...")
 
         try:
@@ -301,7 +352,7 @@ def upload_users(api_url: str, users: list[dict], batch_size: int = 500) -> int:
     url = f"{api_url}/api/v1/admin/bulk/users"
 
     for i in range(0, len(users), batch_size):
-        batch = users[i:i + batch_size]
+        batch = users[i : i + batch_size]
         print(f"  Uploading users {i+1}-{i+len(batch)}...")
 
         try:
@@ -322,7 +373,7 @@ def upload_ratings(api_url: str, ratings: list[dict], batch_size: int = 1000) ->
     url = f"{api_url}/api/v1/admin/bulk/ratings"
 
     for i in range(0, len(ratings), batch_size):
-        batch = ratings[i:i + batch_size]
+        batch = ratings[i : i + batch_size]
         print(f"  Uploading ratings {i+1}-{i+len(batch)}...")
 
         try:

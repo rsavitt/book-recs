@@ -16,7 +16,6 @@ ROMANTASY_INDICATOR_TAGS = {
     "romantic-fantasy",
     "fae-romance",
     "fantasy-with-romance",
-
     # Setting indicators
     "fae",
     "faerie",
@@ -28,7 +27,6 @@ ROMANTASY_INDICATOR_TAGS = {
     "witches",
     "magic-academy",
     "fantasy-academy",
-
     # Trope indicators (when combined with fantasy elements)
     "enemies-to-lovers",
     "forced-proximity",
@@ -111,7 +109,6 @@ TAGS = [
         "description": "Fantasy written for adult readers",
         "is_romantasy_indicator": False,
     },
-
     # === TROPE TAGS ===
     {
         "name": "Enemies to Lovers",
@@ -246,7 +243,6 @@ TAGS = [
         "description": "Protagonist torn between two love interests (typically chooses one)",
         "is_romantasy_indicator": False,
     },
-
     # === SETTING TAGS ===
     {
         "name": "Fae",
@@ -318,7 +314,6 @@ TAGS = [
         "description": "Features pirates or seafaring",
         "is_romantasy_indicator": False,
     },
-
     # === THEME TAGS ===
     {
         "name": "War/Battle",
@@ -378,7 +373,6 @@ SHELF_TO_TAG_MAPPING = {
     "witch": "witches",
     "magic-academy": "magic-academy",
     "academy": "magic-academy",
-
     # Trope mappings
     "enemies-to-lovers": "enemies-to-lovers",
     "etl": "enemies-to-lovers",
@@ -395,7 +389,6 @@ SHELF_TO_TAG_MAPPING = {
     "morally-gray": "morally-grey",
     "fated-mates": "fated-mates",
     "mates": "fated-mates",
-
     # Genre mappings
     "paranormal-romance": "paranormal-romance",
     "pnr": "paranormal-romance",
@@ -404,7 +397,6 @@ SHELF_TO_TAG_MAPPING = {
     "dark-fantasy": "dark-fantasy",
     "ya-fantasy": "ya-fantasy",
     "adult-fantasy": "adult-fantasy",
-
     # Why Choose / Reverse Harem mappings
     "why-choose": "why-choose",
     "whychoose": "why-choose",

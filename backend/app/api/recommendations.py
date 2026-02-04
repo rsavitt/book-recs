@@ -120,7 +120,7 @@ async def get_quick_recommendations(
         from app.models.book import book_tag_association
 
         similar_books = (
-            db.query(Book, func.count(book_tag_association.c.tag_id).label('tag_count'))
+            db.query(Book, func.count(book_tag_association.c.tag_id).label("tag_count"))
             .join(book_tag_association, Book.id == book_tag_association.c.book_id)
             .filter(
                 book_tag_association.c.tag_id.in_(liked_tag_ids),
@@ -134,7 +134,9 @@ async def get_quick_recommendations(
         )
         for book, tag_count in similar_books:
             if book.id not in seen_ids:
-                recommendations.append((book, 0.7 + (tag_count * 0.05), "Similar vibes to books you like"))
+                recommendations.append(
+                    (book, 0.7 + (tag_count * 0.05), "Similar vibes to books you like")
+                )
                 seen_ids.add(book.id)
 
     # Sort by score and limit
@@ -165,7 +167,9 @@ async def get_recommendations(
     is_ya: bool | None = Query(None),
     tropes: list[str] | None = Query(None),
     exclude_tropes: list[str] | None = Query(None),
-    exclude_why_choose: bool | None = Query(None, description="Filter out Why Choose/Reverse Harem books. Defaults to user preference."),
+    exclude_why_choose: bool | None = Query(
+        None, description="Filter out Why Choose/Reverse Harem books. Defaults to user preference."
+    ),
     # Pagination
     limit: int = Query(20, le=50),
     offset: int = Query(0),

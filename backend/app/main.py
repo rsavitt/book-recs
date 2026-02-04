@@ -54,19 +54,35 @@ async def lifespan(app: FastAPI):
         inspector = inspect(engine)
         with engine.connect() as conn:
             # Check and add missing columns to books table
-            book_columns = [col['name'] for col in inspector.get_columns('books')]
-            if 'is_why_choose' not in book_columns:
-                conn.execute(text("ALTER TABLE books ADD COLUMN is_why_choose BOOLEAN NOT NULL DEFAULT false"))
-                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_books_is_why_choose ON books (is_why_choose)"))
+            book_columns = [col["name"] for col in inspector.get_columns("books")]
+            if "is_why_choose" not in book_columns:
+                conn.execute(
+                    text(
+                        "ALTER TABLE books ADD COLUMN is_why_choose BOOLEAN NOT NULL DEFAULT false"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_books_is_why_choose ON books (is_why_choose)"
+                    )
+                )
                 logger.info("Added is_why_choose column to books table")
-            if 'why_choose_confidence' not in book_columns:
-                conn.execute(text("ALTER TABLE books ADD COLUMN why_choose_confidence FLOAT NOT NULL DEFAULT 0.0"))
+            if "why_choose_confidence" not in book_columns:
+                conn.execute(
+                    text(
+                        "ALTER TABLE books ADD COLUMN why_choose_confidence FLOAT NOT NULL DEFAULT 0.0"
+                    )
+                )
                 logger.info("Added why_choose_confidence column to books table")
 
             # Check and add missing columns to users table
-            user_columns = [col['name'] for col in inspector.get_columns('users')]
-            if 'exclude_why_choose' not in user_columns:
-                conn.execute(text("ALTER TABLE users ADD COLUMN exclude_why_choose BOOLEAN NOT NULL DEFAULT true"))
+            user_columns = [col["name"] for col in inspector.get_columns("users")]
+            if "exclude_why_choose" not in user_columns:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN exclude_why_choose BOOLEAN NOT NULL DEFAULT true"
+                    )
+                )
                 logger.info("Added exclude_why_choose column to users table")
 
             conn.commit()
@@ -78,6 +94,7 @@ async def lifespan(app: FastAPI):
         if book_count == 0:
             logger.info("No books found, running seed script...")
             from scripts.seed_books import seed_books
+
             seed_books()
             logger.info("Seed complete!")
     except Exception as e:
@@ -126,6 +143,7 @@ if has_wildcard:
     # Use allow_origin_regex for wildcard support
     # This regex matches the explicit origins plus any *.vercel.app URL
     import re
+
     explicit_origins = [re.escape(o) for o in settings.cors_origins_list if "*" not in o]
     # Build regex: explicit origins OR any vercel.app subdomain
     origin_patterns = explicit_origins + [r"https://[a-zA-Z0-9-]+\.vercel\.app"]

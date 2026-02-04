@@ -93,9 +93,7 @@ class StoryGraphCSVParser:
             return False
 
         # Check for StoryGraph-specific headers
-        has_storygraph_header = any(
-            h in reader.fieldnames for h in STORYGRAPH_INDICATORS
-        )
+        has_storygraph_header = any(h in reader.fieldnames for h in STORYGRAPH_INDICATORS)
         if not has_storygraph_header:
             self.errors.append(
                 "This doesn't appear to be a StoryGraph export. "
@@ -365,9 +363,7 @@ class StoryGraphCSVParser:
 
         return status_map.get(status_lower, status_lower)
 
-    def _generate_book_id(
-        self, isbn: str | None, title: str, author: str
-    ) -> str:
+    def _generate_book_id(self, isbn: str | None, title: str, author: str) -> str:
         """
         Generate a consistent book ID for StoryGraph imports.
 

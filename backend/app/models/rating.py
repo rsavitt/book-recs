@@ -10,9 +10,7 @@ class Rating(Base):
     """User rating for a book."""
 
     __tablename__ = "ratings"
-    __table_args__ = (
-        UniqueConstraint("user_id", "book_id", name="unique_user_book_rating"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "book_id", name="unique_user_book_rating"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -24,7 +22,9 @@ class Rating(Base):
     date_added: Mapped[date | None] = mapped_column(Date)
 
     # Source tracking
-    source: Mapped[str] = mapped_column(String(50), default="goodreads_import")  # goodreads_import, manual, etc.
+    source: Mapped[str] = mapped_column(
+        String(50), default="goodreads_import"
+    )  # goodreads_import, manual, etc.
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -50,8 +50,12 @@ class Shelf(Base):
     book_id: Mapped[int] = mapped_column(ForeignKey("books.id"), index=True)
 
     # Shelf data
-    shelf_name: Mapped[str] = mapped_column(String(100), index=True)  # e.g., "to-read", "romantasy", "fae"
-    shelf_name_normalized: Mapped[str] = mapped_column(String(100), index=True)  # lowercase, no special chars
+    shelf_name: Mapped[str] = mapped_column(
+        String(100), index=True
+    )  # e.g., "to-read", "romantasy", "fae"
+    shelf_name_normalized: Mapped[str] = mapped_column(
+        String(100), index=True
+    )  # lowercase, no special chars
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

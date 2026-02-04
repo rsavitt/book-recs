@@ -113,11 +113,7 @@ class RecommendationEngine:
 
     def _get_read_book_ids(self) -> set[int]:
         """Get IDs of books the user has already read/rated."""
-        ratings = (
-            self.db.query(Rating.book_id)
-            .filter(Rating.user_id == self.user_id)
-            .all()
-        )
+        ratings = self.db.query(Rating.book_id).filter(Rating.user_id == self.user_id).all()
         return {r.book_id for r in ratings}
 
     def _score_candidate_books(
@@ -311,9 +307,7 @@ class RecommendationEngine:
 
         return [title for (title,) in shared]
 
-    def _generate_explanation_text(
-        self, scored: ScoredBook, shared_books: list[str]
-    ) -> str:
+    def _generate_explanation_text(self, scored: ScoredBook, shared_books: list[str]) -> str:
         """Generate a human-readable explanation for the recommendation."""
         count = scored.neighbor_count
         avg = round(scored.average_neighbor_rating, 1)
@@ -327,9 +321,7 @@ class RecommendationEngine:
 
         return f"{count} similar reader{'s' if count != 1 else ''}{books_text} rated this {avg}★ average"
 
-    def _get_popular_recommendations(
-        self, limit: int, offset: int
-    ) -> list[RecommendationResponse]:
+    def _get_popular_recommendations(self, limit: int, offset: int) -> list[RecommendationResponse]:
         """
         Fallback: return popular Romantasy books for cold start users.
         """
@@ -350,9 +342,7 @@ class RecommendationEngine:
         if self.filters.is_ya is not None:
             query = query.filter(Book.is_ya == self.filters.is_ya)
         if self.filters.exclude_why_choose:
-            query = query.filter(
-                or_(not Book.is_why_choose, Book.why_choose_confidence < 0.5)
-            )
+            query = query.filter(or_(not Book.is_why_choose, Book.why_choose_confidence < 0.5))
 
         # Order by confidence (seed list books) then publication year
         books = (
@@ -427,9 +417,7 @@ def record_feedback(db: Session, user_id: int, book_id: int, feedback: str) -> N
     if feedback == "already_read":
         # Check if rating exists
         existing = (
-            db.query(Rating)
-            .filter(Rating.user_id == user_id, Rating.book_id == book_id)
-            .first()
+            db.query(Rating).filter(Rating.user_id == user_id, Rating.book_id == book_id).first()
         )
         if not existing:
             # Create unrated entry so it's excluded from future recs
@@ -463,10 +451,13 @@ def get_recommendation_explanation(db: Session, user_id: int, book_id: int) -> d
             Rating.rating,
             User.username,
         )
-        .join(Rating, and_(
-            Rating.user_id == UserSimilarity.neighbor_id,
-            Rating.book_id == book_id,
-        ))
+        .join(
+            Rating,
+            and_(
+                Rating.user_id == UserSimilarity.neighbor_id,
+                Rating.book_id == book_id,
+            ),
+        )
         .join(User, User.id == UserSimilarity.neighbor_id)
         .filter(
             UserSimilarity.user_id == user_id,
@@ -520,7 +511,6 @@ def get_recommendation_explanation(db: Session, user_id: int, book_id: int) -> d
         "shared_books": shared_books,
         "total_neighbors_who_rated": len(neighbors),
         "average_rating": (
-            round(sum(n.rating for n in neighbors) / len(neighbors), 2)
-            if neighbors else 0
+            round(sum(n.rating for n in neighbors) / len(neighbors), 2) if neighbors else 0
         ),
     }

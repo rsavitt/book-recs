@@ -103,17 +103,19 @@ def search_open_library(author: str, limit: int = 20) -> list[dict]:
                 elif len(isbn) == 10 and not isbn_10:
                     isbn_10 = isbn
 
-            books.append({
-                "title": title[:500],
-                "author": author[:255],
-                "isbn_13": isbn_13,
-                "isbn_10": isbn_10,
-                "cover_url": cover_url,
-                "page_count": doc.get("number_of_pages_median"),
-                "publication_year": doc.get("first_publish_year"),
-                "is_romantasy": True,
-                "romantasy_confidence": 0.7,  # High confidence since we're searching by author
-            })
+            books.append(
+                {
+                    "title": title[:500],
+                    "author": author[:255],
+                    "isbn_13": isbn_13,
+                    "isbn_10": isbn_10,
+                    "cover_url": cover_url,
+                    "page_count": doc.get("number_of_pages_median"),
+                    "publication_year": doc.get("first_publish_year"),
+                    "is_romantasy": True,
+                    "romantasy_confidence": 0.7,  # High confidence since we're searching by author
+                }
+            )
 
     except Exception as e:
         print(f"  Error searching for {author}: {e}")
@@ -127,7 +129,7 @@ def upload_books(api_url: str, books: list[dict], batch_size: int = 50) -> int:
     url = f"{api_url}/api/v1/admin/bulk/books"
 
     for i in range(0, len(books), batch_size):
-        batch = books[i:i + batch_size]
+        batch = books[i : i + batch_size]
         print(f"    Uploading batch {i//batch_size + 1}...")
 
         try:

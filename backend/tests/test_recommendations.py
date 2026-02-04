@@ -1,6 +1,5 @@
 """Tests for recommendation service."""
 
-
 import pytest
 
 from app.schemas.recommendation import RecommendationFilters
