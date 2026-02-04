@@ -5,13 +5,12 @@ Tests for VectorTropeClassifier service and /books/{id}/tropes API endpoint.
 import pytest
 from sqlalchemy.orm import Session
 
-from app.models.book import Book, BookTag
+from app.models.book import BookTag
 from app.models.embedding import BookReviewEmbedding, BookTropeScore
 from app.services.trope_classifier import (
     VectorTropeClassifier,
     apply_vector_tags_to_all_books,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -150,9 +149,7 @@ class TestApplyAutoTags:
     def test_adds_matching_tags(self, db, test_books, test_tags):
         book = test_books[0]
         _create_embedding(db, book.id, review_count=10)
-        _create_trope_score(
-            db, book.id, "enemies-to-lovers", 0.7, auto_tagged=True
-        )
+        _create_trope_score(db, book.id, "enemies-to-lovers", 0.7, auto_tagged=True)
 
         classifier = VectorTropeClassifier(db)
         added = classifier.apply_auto_tags(book.id)
@@ -170,9 +167,7 @@ class TestApplyAutoTags:
         db.commit()
 
         _create_embedding(db, book.id, review_count=10)
-        _create_trope_score(
-            db, book.id, "enemies-to-lovers", 0.7, auto_tagged=True
-        )
+        _create_trope_score(db, book.id, "enemies-to-lovers", 0.7, auto_tagged=True)
 
         classifier = VectorTropeClassifier(db)
         added = classifier.apply_auto_tags(book.id)
@@ -209,9 +204,7 @@ class TestGetTopTropes:
     def test_respects_limit(self, db, test_books):
         book = test_books[0]
         _create_embedding(db, book.id, review_count=10)
-        for i, slug in enumerate(
-            ["fae", "slow-burn", "enemies-to-lovers", "dragons", "spicy"]
-        ):
+        for i, slug in enumerate(["fae", "slow-burn", "enemies-to-lovers", "dragons", "spicy"]):
             _create_trope_score(db, book.id, slug, 0.9 - i * 0.1)
 
         classifier = VectorTropeClassifier(db)
@@ -243,9 +236,7 @@ class TestApplyVectorTagsToAllBooks:
         _create_embedding(db, book_a.id, review_count=10)
         _create_embedding(db, book_b.id, review_count=10)
 
-        _create_trope_score(
-            db, book_a.id, "enemies-to-lovers", 0.7, auto_tagged=True
-        )
+        _create_trope_score(db, book_a.id, "enemies-to-lovers", 0.7, auto_tagged=True)
         _create_trope_score(db, book_b.id, "fae", 0.6, auto_tagged=True)
 
         stats = apply_vector_tags_to_all_books(db)
@@ -292,9 +283,7 @@ class TestTropesAPIEndpoint:
     def test_respects_limit_param(self, client, db, test_books):
         book = test_books[0]
         _create_embedding(db, book.id, review_count=10)
-        for i, slug in enumerate(
-            ["fae", "slow-burn", "enemies-to-lovers", "dragons", "spicy"]
-        ):
+        for i, slug in enumerate(["fae", "slow-burn", "enemies-to-lovers", "dragons", "spicy"]):
             _create_trope_score(db, book.id, slug, 0.9 - i * 0.1)
 
         resp = client.get(f"/api/v1/books/{book.id}/tropes?limit=2")

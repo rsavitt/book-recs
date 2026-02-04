@@ -7,9 +7,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-import numpy as np
 import pytest
-from sqlalchemy.orm import Session
 
 from app.data.trope_seeds import TROPE_SEEDS, TROPE_THRESHOLD_OVERRIDES
 from app.models.book import BookEdition
@@ -21,7 +19,6 @@ from scripts.import_review_embeddings import (
     collect_reviews,
     compute_trope_scores,
 )
-
 
 # ===================================================================
 # TestCleanReviewText
@@ -356,7 +353,7 @@ class TestComputeTropeScores:
         # Default threshold 0.70: fae (0.6) below, dragon-riders (0.8) above
         # dragon-riders has override of 0.40 → still above
         settings = SimpleNamespace(TROPE_SIMILARITY_THRESHOLD=0.70)
-        stats = compute_trope_scores(db, settings)
+        compute_trope_scores(db, settings)
 
         fae_score = (
             db.query(BookTropeScore)
