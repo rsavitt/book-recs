@@ -45,12 +45,8 @@ def upgrade() -> None:
                 nullable=False,
                 server_default="ucsd_goodreads",
             ),
-            sa.Column(
-                "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
-            ),
-            sa.Column(
-                "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
-            ),
+            sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+            sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
             sa.ForeignKeyConstraint(["book_id"], ["books.id"], ondelete="CASCADE"),
             sa.PrimaryKeyConstraint("id"),
         )
@@ -62,9 +58,7 @@ def upgrade() -> None:
         )
         # Replace the ARRAY column with actual vector type
         op.execute("ALTER TABLE book_review_embeddings DROP COLUMN embedding")
-        op.execute(
-            "ALTER TABLE book_review_embeddings ADD COLUMN embedding vector(384) NOT NULL"
-        )
+        op.execute("ALTER TABLE book_review_embeddings ADD COLUMN embedding vector(384) NOT NULL")
         # Create IVFFlat index for cosine similarity search
         op.execute(
             "CREATE INDEX ix_book_review_embeddings_embedding "
@@ -79,9 +73,7 @@ def upgrade() -> None:
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("trope_slug", sa.String(100), nullable=False),
             sa.Column("seed_phrase", sa.Text(), nullable=False),
-            sa.Column(
-                "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
-            ),
+            sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
             sa.PrimaryKeyConstraint("id"),
         )
         op.create_index(
@@ -90,9 +82,7 @@ def upgrade() -> None:
             ["trope_slug"],
         )
         # Add vector column
-        op.execute(
-            "ALTER TABLE trope_seed_embeddings ADD COLUMN embedding vector(384) NOT NULL"
-        )
+        op.execute("ALTER TABLE trope_seed_embeddings ADD COLUMN embedding vector(384) NOT NULL")
 
     # Create book_trope_scores table
     if not table_exists("book_trope_scores"):
@@ -102,30 +92,20 @@ def upgrade() -> None:
             sa.Column("book_id", sa.Integer(), nullable=False),
             sa.Column("trope_slug", sa.String(100), nullable=False),
             sa.Column("similarity_score", sa.Float(), nullable=False),
-            sa.Column(
-                "auto_tagged", sa.Boolean(), nullable=False, server_default="false"
-            ),
-            sa.Column(
-                "computed_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
-            ),
+            sa.Column("auto_tagged", sa.Boolean(), nullable=False, server_default="false"),
+            sa.Column("computed_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
             sa.ForeignKeyConstraint(["book_id"], ["books.id"], ondelete="CASCADE"),
             sa.PrimaryKeyConstraint("id"),
             sa.UniqueConstraint("book_id", "trope_slug", name="uq_book_trope_score"),
         )
-        op.create_index(
-            "ix_book_trope_scores_book_id", "book_trope_scores", ["book_id"]
-        )
-        op.create_index(
-            "ix_book_trope_scores_trope_slug", "book_trope_scores", ["trope_slug"]
-        )
+        op.create_index("ix_book_trope_scores_book_id", "book_trope_scores", ["book_id"])
+        op.create_index("ix_book_trope_scores_trope_slug", "book_trope_scores", ["trope_slug"])
         op.create_index(
             "ix_book_trope_scores_similarity_score",
             "book_trope_scores",
             ["similarity_score"],
         )
-        op.create_index(
-            "ix_book_trope_scores_auto_tagged", "book_trope_scores", ["auto_tagged"]
-        )
+        op.create_index("ix_book_trope_scores_auto_tagged", "book_trope_scores", ["auto_tagged"])
 
 
 def downgrade() -> None:
