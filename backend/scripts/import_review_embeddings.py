@@ -41,8 +41,8 @@ from app.models.embedding import BookReviewEmbedding, BookTropeScore, TropeSeedE
 
 # UCSD Goodreads review dataset URLs
 REVIEW_URLS = {
-    "fantasy_paranormal": "https://datarepo.eng.ucsd.edu/mcauley_group/gdrive/goodreads/byGenre/goodreads_reviews_fantasy_paranormal.json.gz",
-    "romance": "https://datarepo.eng.ucsd.edu/mcauley_group/gdrive/goodreads/byGenre/goodreads_reviews_romance.json.gz",
+    "fantasy_paranormal": "https://mcauleylab.ucsd.edu/public_datasets/gdrive/goodreads/byGenre/goodreads_reviews_fantasy_paranormal.json.gz",
+    "romance": "https://mcauleylab.ucsd.edu/public_datasets/gdrive/goodreads/byGenre/goodreads_reviews_romance.json.gz",
 }
 
 DATA_DIR = Path(__file__).parent / "data"
