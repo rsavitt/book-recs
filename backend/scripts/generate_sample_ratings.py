@@ -83,8 +83,9 @@ READER_PERSONAS = [
 def normalize_author(author: str) -> str:
     """Normalize author name for matching."""
     import unicodedata
-    normalized = unicodedata.normalize('NFKD', author)
-    normalized = ''.join(c for c in normalized if not unicodedata.combining(c))
+
+    normalized = unicodedata.normalize("NFKD", author)
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
     return normalized.lower().strip()
 
 
@@ -134,9 +135,9 @@ def generate_ratings(session, clear_existing: bool = False):
 
     if clear_existing:
         # Delete sample users and their ratings
-        sample_users = session.query(User).filter(
-            User.hashed_password == "SYNTHETIC_NO_LOGIN"
-        ).all()
+        sample_users = (
+            session.query(User).filter(User.hashed_password == "SYNTHETIC_NO_LOGIN").all()
+        )
         for user in sample_users:
             session.query(Rating).filter(Rating.user_id == user.id).delete()
             session.delete(user)
@@ -159,7 +160,9 @@ def generate_ratings(session, clear_existing: bool = False):
 
         for i in range(persona["count"]):
             # Create user
-            user_hash = hashlib.md5(f"{persona['name']}_{i}_{random.random()}".encode()).hexdigest()[:8]
+            user_hash = hashlib.md5(
+                f"{persona['name']}_{i}_{random.random()}".encode()
+            ).hexdigest()[:8]
             username = f"{persona['name'][:10]}_{user_hash}"
 
             # Check for existing
@@ -188,10 +191,7 @@ def generate_ratings(session, clear_existing: bool = False):
                     continue
 
                 rating = Rating(
-                    user_id=user.id,
-                    book_id=book.id,
-                    rating=rating_value,
-                    source="synthetic"
+                    user_id=user.id, book_id=book.id, rating=rating_value, source="synthetic"
                 )
                 session.add(rating)
                 rating_count += 1
@@ -205,7 +205,9 @@ def generate_ratings(session, clear_existing: bool = False):
     # Show rating distribution
     print("\nRating distribution:")
     for r in range(1, 6):
-        count = session.query(Rating).filter(Rating.rating == r, Rating.source == "synthetic").count()
+        count = (
+            session.query(Rating).filter(Rating.rating == r, Rating.source == "synthetic").count()
+        )
         pct = count / rating_count * 100 if rating_count > 0 else 0
         bar = "█" * int(pct / 2)
         print(f"  {r}★: {count:4d} ({pct:5.1f}%) {bar}")

@@ -474,10 +474,11 @@ def seed_books():
         print("Creating books...")
         for book_data in BOOKS:
             # Check if book already exists
-            existing = db.query(Book).filter(
-                Book.title == book_data["title"],
-                Book.author == book_data["author"]
-            ).first()
+            existing = (
+                db.query(Book)
+                .filter(Book.title == book_data["title"], Book.author == book_data["author"])
+                .first()
+            )
 
             if existing:
                 print(f"  Skipping (exists): {book_data['title']}")

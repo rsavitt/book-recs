@@ -17,7 +17,6 @@ BOOK_ALIASES: dict[str, str] = {
     "acofas": "A Court of Frost and Starlight",
     "acosf": "A Court of Silver Flames",
     "a court of silver flames": "A Court of Silver Flames",
-
     # Sarah J. Maas - Throne of Glass series
     "tog": "Throne of Glass",
     "throne of glass": "Throne of Glass",
@@ -33,7 +32,6 @@ BOOK_ALIASES: dict[str, str] = {
     "tower of dawn": "Tower of Dawn",
     "koa": "Kingdom of Ash",
     "kingdom of ash": "Kingdom of Ash",
-
     # Sarah J. Maas - Crescent City series
     "cc": "House of Earth and Blood",
     "cc1": "House of Earth and Blood",
@@ -46,21 +44,18 @@ BOOK_ALIASES: dict[str, str] = {
     "hofas": "House of Flame and Shadow",
     "house of flame and shadow": "House of Flame and Shadow",
     "crescent city": "House of Earth and Blood",
-
     # Rebecca Yarros - Empyrean series
     "fourth wing": "Fourth Wing",
     "fw": "Fourth Wing",
     "iron flame": "Iron Flame",
     "if": "Iron Flame",
     "onyx storm": "Onyx Storm",
-
     # Carissa Broadbent - Crowns of Nyaxia series
     "serpent and wings": "The Serpent and the Wings of Night",
     "the serpent and the wings of night": "The Serpent and the Wings of Night",
     "tsatwon": "The Serpent and the Wings of Night",
     "ashes and the star cursed king": "The Ashes and the Star-Cursed King",
     "the ashes and the star-cursed king": "The Ashes and the Star-Cursed King",
-
     # Jennifer L. Armentrout - Blood and Ash series
     "fbaa": "From Blood and Ash",
     "from blood and ash": "From Blood and Ash",
@@ -71,7 +66,6 @@ BOOK_ALIASES: dict[str, str] = {
     "twotq": "The War of Two Queens",
     "the war of two queens": "The War of Two Queens",
     "blood and ash": "From Blood and Ash",
-
     # Scarlett St. Clair - Hades x Persephone
     "touch of darkness": "A Touch of Darkness",
     "a touch of darkness": "A Touch of Darkness",
@@ -82,7 +76,6 @@ BOOK_ALIASES: dict[str, str] = {
     "a touch of ruin": "A Touch of Ruin",
     "touch of malice": "A Touch of Malice",
     "a touch of malice": "A Touch of Malice",
-
     # Holly Black - Folk of the Air series
     "cruel prince": "The Cruel Prince",
     "the cruel prince": "The Cruel Prince",
@@ -94,7 +87,6 @@ BOOK_ALIASES: dict[str, str] = {
     "the queen of nothing": "The Queen of Nothing",
     "tqon": "The Queen of Nothing",
     "folk of the air": "The Cruel Prince",
-
     # Leigh Bardugo - Grishaverse
     "shadow and bone": "Shadow and Bone",
     "sab": "Shadow and Bone",
@@ -110,14 +102,12 @@ BOOK_ALIASES: dict[str, str] = {
     "kos": "King of Scars",
     "rule of wolves": "Rule of Wolves",
     "row": "Rule of Wolves",
-
     # Elise Kova - Air Awakens series
     "air awakens": "Air Awakens",
     "fire falling": "Fire Falling",
     "earth's end": "Earth's End",
     "water's wrath": "Water's Wrath",
     "crystal crowned": "Crystal Crowned",
-
     # Other popular romantasy
     "zodiac academy": "Zodiac Academy",
     "za": "Zodiac Academy",

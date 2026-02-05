@@ -39,7 +39,14 @@ ROMANTASY_SEED_BOOKS = [
         "series_position": 2,
         "spice_level": 4,
         "is_ya": False,
-        "tags": ["romantasy", "fae", "enemies-to-lovers", "slow-burn", "found-family", "fated-mates"],
+        "tags": [
+            "romantasy",
+            "fae",
+            "enemies-to-lovers",
+            "slow-burn",
+            "found-family",
+            "fated-mates",
+        ],
     },
     {
         "title": "A Court of Wings and Ruin",
@@ -74,7 +81,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "fae", "enemies-to-lovers", "training", "found-family"],
     },
-
     # === THE EMPYREAN SERIES ===
     {
         "title": "Fourth Wing",
@@ -85,7 +91,14 @@ ROMANTASY_SEED_BOOKS = [
         "series_position": 1,
         "spice_level": 4,
         "is_ya": False,
-        "tags": ["romantasy", "dragons", "dragon-riders", "enemies-to-lovers", "magic-academy", "war"],
+        "tags": [
+            "romantasy",
+            "dragons",
+            "dragon-riders",
+            "enemies-to-lovers",
+            "magic-academy",
+            "war",
+        ],
     },
     {
         "title": "Iron Flame",
@@ -109,7 +122,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "dragons", "dragon-riders", "war"],
     },
-
     # === FROM BLOOD AND ASH SERIES ===
     {
         "title": "From Blood and Ash",
@@ -166,7 +178,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "vampires"],
     },
-
     # === THE FOLK OF THE AIR SERIES ===
     {
         "title": "The Cruel Prince",
@@ -201,7 +212,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": True,
         "tags": ["romantasy", "fae", "enemies-to-lovers", "ya-fantasy"],
     },
-
     # === THRONE OF GLASS SERIES ===
     {
         "title": "Throne of Glass",
@@ -280,7 +290,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "high-fantasy", "war"],
     },
-
     # === CRESCENT CITY SERIES ===
     {
         "title": "House of Earth and Blood",
@@ -315,7 +324,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "urban-fantasy"],
     },
-
     # === THE BRIDGE KINGDOM SERIES ===
     {
         "title": "The Bridge Kingdom",
@@ -339,7 +347,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "political-intrigue", "war"],
     },
-
     # === THE PLATED PRISONER SERIES ===
     {
         "title": "Gild",
@@ -396,7 +403,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "dark-fantasy", "fae"],
     },
-
     # === KINGDOM OF THE WICKED SERIES ===
     {
         "title": "Kingdom of the Wicked",
@@ -431,7 +437,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": False,
         "tags": ["romantasy", "dark-fantasy"],
     },
-
     # === SERPENT & DOVE SERIES ===
     {
         "title": "Serpent & Dove",
@@ -466,7 +471,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": True,
         "tags": ["romantasy", "witches", "ya-fantasy"],
     },
-
     # === AN EMBER IN THE ASHES SERIES ===
     {
         "title": "An Ember in the Ashes",
@@ -512,7 +516,6 @@ ROMANTASY_SEED_BOOKS = [
         "is_ya": True,
         "tags": ["romantasy", "high-fantasy", "ya-fantasy"],
     },
-
     # === STANDALONES AND OTHER SERIES ===
     {
         "title": "The Invisible Life of Addie LaRue",

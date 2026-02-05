@@ -59,9 +59,15 @@ class Book(Base):
     )
 
     # Relationships
-    editions: Mapped[list["BookEdition"]] = relationship(back_populates="book", cascade="all, delete-orphan")
-    tags: Mapped[list["BookTag"]] = relationship(secondary=book_tag_association, back_populates="books")
-    ratings: Mapped[list["Rating"]] = relationship(back_populates="book", cascade="all, delete-orphan")
+    editions: Mapped[list["BookEdition"]] = relationship(
+        back_populates="book", cascade="all, delete-orphan"
+    )
+    tags: Mapped[list["BookTag"]] = relationship(
+        secondary=book_tag_association, back_populates="books"
+    )
+    ratings: Mapped[list["Rating"]] = relationship(
+        back_populates="book", cascade="all, delete-orphan"
+    )
 
     # Reddit-sourced data relationships
     reddit_metrics: Mapped["BookRedditMetrics | None"] = relationship(
@@ -123,7 +129,9 @@ class BookTag(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    books: Mapped[list["Book"]] = relationship(secondary=book_tag_association, back_populates="tags")
+    books: Mapped[list["Book"]] = relationship(
+        secondary=book_tag_association, back_populates="tags"
+    )
 
 
 # Forward references

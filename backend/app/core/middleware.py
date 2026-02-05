@@ -135,8 +135,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Only add HSTS in production
         if request.url.scheme == "https":
-            response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         return response

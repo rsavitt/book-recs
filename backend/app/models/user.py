@@ -25,7 +25,9 @@ class User(Base):
     # Preferences (onboarding)
     spice_preference: Mapped[int | None] = mapped_column(Integer)  # 0-5 scale
     prefers_ya: Mapped[bool | None] = mapped_column(Boolean)  # True=YA, False=Adult, None=Both
-    exclude_why_choose: Mapped[bool] = mapped_column(Boolean, default=True)  # Filter out reverse harem/why choose
+    exclude_why_choose: Mapped[bool] = mapped_column(
+        Boolean, default=True
+    )  # Filter out reverse harem/why choose
 
     # Metadata
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -35,8 +37,12 @@ class User(Base):
     last_import_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     # Relationships
-    ratings: Mapped[list["Rating"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    shelves: Mapped[list["Shelf"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    ratings: Mapped[list["Rating"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    shelves: Mapped[list["Shelf"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 # Forward reference for type hints

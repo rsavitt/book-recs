@@ -167,11 +167,7 @@ def print_stats(db: Session):
     print("\nTags by category:")
     from sqlalchemy import func
 
-    categories = (
-        db.query(BookTag.category, func.count(BookTag.id))
-        .group_by(BookTag.category)
-        .all()
-    )
+    categories = db.query(BookTag.category, func.count(BookTag.id)).group_by(BookTag.category).all()
     for category, count in categories:
         print(f"  {category}: {count}")
 

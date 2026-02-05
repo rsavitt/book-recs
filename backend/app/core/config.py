@@ -93,7 +93,11 @@ class Settings(BaseSettings):
             if allowed == origin:
                 return True
             # Support Vercel wildcard pattern
-            if allowed == "https://*.vercel.app" and origin.endswith(".vercel.app") and origin.startswith("https://"):
+            if (
+                allowed == "https://*.vercel.app"
+                and origin.endswith(".vercel.app")
+                and origin.startswith("https://")
+            ):
                 return True
         return False
 

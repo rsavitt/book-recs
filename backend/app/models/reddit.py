@@ -4,6 +4,7 @@ Reddit-sourced data models for book recommendations.
 These models store aggregated signals from Reddit discussions (primarily r/romantasy)
 to enhance book recommendations with community-driven insights.
 """
+
 from datetime import date, datetime
 
 from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, Text, UniqueConstraint

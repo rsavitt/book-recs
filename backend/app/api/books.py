@@ -41,7 +41,9 @@ async def list_romantasy_books(
 
 @router.get("/tags")
 async def list_tags(
-    category: str | None = Query(None, description="Filter by category: genre, trope, theme, setting"),
+    category: str | None = Query(
+        None, description="Filter by category: genre, trope, theme, setting"
+    ),
     db: Session = Depends(get_db),
 ):
     """List available book tags/tropes."""

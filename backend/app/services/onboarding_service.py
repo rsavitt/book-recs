@@ -203,9 +203,7 @@ def rate_starter_books(
 
         # Check if rating already exists
         existing = (
-            db.query(Rating)
-            .filter(Rating.user_id == user_id, Rating.book_id == book_id)
-            .first()
+            db.query(Rating).filter(Rating.user_id == user_id, Rating.book_id == book_id).first()
         )
 
         if existing:
@@ -255,12 +253,7 @@ def get_trope_options(db: Session) -> list[dict]:
     Returns:
         List of trope dicts with name, slug, description
     """
-    tropes = (
-        db.query(BookTag)
-        .filter(BookTag.category == "trope")
-        .order_by(BookTag.name)
-        .all()
-    )
+    tropes = db.query(BookTag).filter(BookTag.category == "trope").order_by(BookTag.name).all()
 
     return [
         {

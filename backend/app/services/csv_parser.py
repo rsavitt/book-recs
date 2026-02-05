@@ -330,6 +330,7 @@ class GoodreadsCSVParser:
         for fmt in formats:
             try:
                 from datetime import datetime
+
                 return datetime.strptime(date_str, fmt).date()
             except ValueError:
                 continue
@@ -455,4 +456,9 @@ def parse_library_csv(
         return books, source, parser.errors, parser.warnings
 
     else:
-        return [], source, ["Unable to detect CSV format. Please upload a Goodreads or StoryGraph export."], []
+        return (
+            [],
+            source,
+            ["Unable to detect CSV format. Please upload a Goodreads or StoryGraph export."],
+            [],
+        )

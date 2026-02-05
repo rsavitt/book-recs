@@ -66,17 +66,54 @@ TROPE_KEYWORDS = {
 
 # Sentiment indicators
 POSITIVE_INDICATORS = [
-    "loved", "love", "amazing", "incredible", "fantastic", "highly recommend",
-    "recommend", "favorite", "favourite", "obsessed", "devoured", "couldn't put down",
-    "5 stars", "five stars", "must read", "chef's kiss", "perfection", "beautiful",
-    "masterpiece", "best book", "loved it", "so good", "one of my favorites",
+    "loved",
+    "love",
+    "amazing",
+    "incredible",
+    "fantastic",
+    "highly recommend",
+    "recommend",
+    "favorite",
+    "favourite",
+    "obsessed",
+    "devoured",
+    "couldn't put down",
+    "5 stars",
+    "five stars",
+    "must read",
+    "chef's kiss",
+    "perfection",
+    "beautiful",
+    "masterpiece",
+    "best book",
+    "loved it",
+    "so good",
+    "one of my favorites",
 ]
 
 NEGATIVE_INDICATORS = [
-    "dnf", "did not finish", "couldn't finish", "hated", "hate", "disappointing",
-    "disappointed", "avoid", "don't recommend", "worst", "terrible", "boring",
-    "couldn't get into", "not for me", "skip", "regret reading", "waste of time",
-    "overhyped", "overrated", "1 star", "one star", "didn't like",
+    "dnf",
+    "did not finish",
+    "couldn't finish",
+    "hated",
+    "hate",
+    "disappointing",
+    "disappointed",
+    "avoid",
+    "don't recommend",
+    "worst",
+    "terrible",
+    "boring",
+    "couldn't get into",
+    "not for me",
+    "skip",
+    "regret reading",
+    "waste of time",
+    "overhyped",
+    "overrated",
+    "1 star",
+    "one star",
+    "didn't like",
 ]
 
 # Recommendation patterns
@@ -91,6 +128,7 @@ RECOMMENDATION_PATTERNS = [
 @dataclass
 class BookMention:
     """A book mention extracted from Reddit text."""
+
     book_id: int
     title: str
     confidence: float
@@ -101,6 +139,7 @@ class BookMention:
 @dataclass
 class RecommendationPair:
     """A book recommendation pair (if you liked X, try Y)."""
+
     source_book_id: int
     target_book_id: int
     context: str
@@ -109,6 +148,7 @@ class RecommendationPair:
 @dataclass
 class CollectionStats:
     """Statistics from a collection run."""
+
     posts_processed: int = 0
     comments_processed: int = 0
     book_mentions: int = 0
@@ -187,8 +227,13 @@ class RedditCollector:
         """
         if search_keywords is None:
             search_keywords = [
-                "recommend", "recommendation", "looking for", "similar to",
-                "just finished", "what should i read", "suggestion",
+                "recommend",
+                "recommendation",
+                "looking for",
+                "similar to",
+                "just finished",
+                "what should i read",
+                "suggestion",
             ]
 
         sub = self.reddit.subreddit(subreddit)
@@ -239,17 +284,18 @@ class RedditCollector:
         for alias, book_id in self.book_titles_normalized.items():
             if alias in text_lower:
                 # Check if it's a standalone word/phrase
-                pattern = r'\b' + re.escape(alias) + r'\b'
+                pattern = r"\b" + re.escape(alias) + r"\b"
                 if re.search(pattern, text_lower):
                     title = next(
-                        (t for t, bid in self.book_titles.items() if bid == book_id),
-                        alias
+                        (t for t, bid in self.book_titles.items() if bid == book_id), alias
                     )
-                    mentions.append(BookMention(
-                        book_id=book_id,
-                        title=title,
-                        confidence=1.0,
-                    ))
+                    mentions.append(
+                        BookMention(
+                            book_id=book_id,
+                            title=title,
+                            confidence=1.0,
+                        )
+                    )
 
         # Fuzzy match against book titles for longer phrases
         words = text.split()
@@ -273,11 +319,13 @@ class RedditCollector:
 
                     # Avoid duplicates
                     if not any(m.book_id == book_id for m in mentions):
-                        mentions.append(BookMention(
-                            book_id=book_id,
-                            title=matched_title,
-                            confidence=score / 100,
-                        ))
+                        mentions.append(
+                            BookMention(
+                                book_id=book_id,
+                                title=matched_title,
+                                confidence=score / 100,
+                            )
+                        )
 
         # Add sentiment and tropes to mentions
         for mention in mentions:
@@ -317,14 +365,16 @@ class RedditCollector:
 
                         if source.book_id != target.book_id:
                             # Anonymize context (remove potential usernames)
-                            context = re.sub(r'u/\w+', '[user]', match.group(0))
+                            context = re.sub(r"u/\w+", "[user]", match.group(0))
                             context = context[:200]  # Limit length
 
-                            pairs.append(RecommendationPair(
-                                source_book_id=source.book_id,
-                                target_book_id=target.book_id,
-                                context=context,
-                            ))
+                            pairs.append(
+                                RecommendationPair(
+                                    source_book_id=source.book_id,
+                                    target_book_id=target.book_id,
+                                    context=context,
+                                )
+                            )
             except re.error as e:
                 logger.warning(f"Regex error with pattern: {e}")
 
@@ -413,18 +463,22 @@ class RedditCollector:
         stats = CollectionStats()
 
         # Aggregated data
-        book_data: dict[int, dict] = defaultdict(lambda: {
-            "mention_count": 0,
-            "recommendation_count": 0,
-            "warning_count": 0,
-            "sentiment_scores": [],
-            "tropes": defaultdict(int),
-            "first_seen": None,
-        })
-        edge_data: dict[tuple[int, int], dict] = defaultdict(lambda: {
-            "mention_count": 0,
-            "contexts": [],
-        })
+        book_data: dict[int, dict] = defaultdict(
+            lambda: {
+                "mention_count": 0,
+                "recommendation_count": 0,
+                "warning_count": 0,
+                "sentiment_scores": [],
+                "tropes": defaultdict(int),
+                "first_seen": None,
+            }
+        )
+        edge_data: dict[tuple[int, int], dict] = defaultdict(
+            lambda: {
+                "mention_count": 0,
+                "contexts": [],
+            }
+        )
 
         logger.info(f"Starting collection from r/{subreddit} (limit={limit}, dry_run={dry_run})")
 
@@ -525,16 +579,15 @@ class RedditCollector:
 
         for book_id, data in sorted_books:
             title = next(
-                (t for t, bid in self.book_titles.items() if bid == book_id),
-                f"Book {book_id}"
+                (t for t, bid in self.book_titles.items() if bid == book_id), f"Book {book_id}"
             )
             avg_sentiment = (
                 sum(data["sentiment_scores"]) / len(data["sentiment_scores"])
-                if data["sentiment_scores"] else 0
+                if data["sentiment_scores"]
+                else 0
             )
             logger.info(
-                f"  {title}: {data['mention_count']} mentions, "
-                f"sentiment: {avg_sentiment:.2f}"
+                f"  {title}: {data['mention_count']} mentions, " f"sentiment: {avg_sentiment:.2f}"
             )
 
         # Top recommendation pairs
@@ -547,12 +600,10 @@ class RedditCollector:
 
         for (source_id, target_id), data in sorted_edges:
             source = next(
-                (t for t, bid in self.book_titles.items() if bid == source_id),
-                f"Book {source_id}"
+                (t for t, bid in self.book_titles.items() if bid == source_id), f"Book {source_id}"
             )
             target = next(
-                (t for t, bid in self.book_titles.items() if bid == target_id),
-                f"Book {target_id}"
+                (t for t, bid in self.book_titles.items() if bid == target_id), f"Book {target_id}"
             )
             logger.info(f"  {source} -> {target}: {data['mention_count']} mentions")
 
@@ -568,13 +619,14 @@ class RedditCollector:
 
         # Save book metrics
         for book_id, data in book_data.items():
-            metrics = db.query(BookRedditMetrics).filter(
-                BookRedditMetrics.book_id == book_id
-            ).first()
+            metrics = (
+                db.query(BookRedditMetrics).filter(BookRedditMetrics.book_id == book_id).first()
+            )
 
             avg_sentiment = (
                 sum(data["sentiment_scores"]) / len(data["sentiment_scores"])
-                if data["sentiment_scores"] else 0.0
+                if data["sentiment_scores"]
+                else 0.0
             )
 
             if metrics:
@@ -582,9 +634,7 @@ class RedditCollector:
                 metrics.mention_count += data["mention_count"]
                 metrics.recommendation_count += data["recommendation_count"]
                 metrics.warning_count += data["warning_count"]
-                metrics.sentiment_score = (
-                    (metrics.sentiment_score + avg_sentiment) / 2
-                )
+                metrics.sentiment_score = (metrics.sentiment_score + avg_sentiment) / 2
                 # Merge tropes
                 existing_tropes = metrics.tropes_mentioned or {}
                 for trope, count in data["tropes"].items():
@@ -607,10 +657,14 @@ class RedditCollector:
 
         # Save recommendation edges
         for (source_id, target_id), data in edge_data.items():
-            edge = db.query(BookRecommendationEdge).filter(
-                BookRecommendationEdge.source_book_id == source_id,
-                BookRecommendationEdge.target_book_id == target_id,
-            ).first()
+            edge = (
+                db.query(BookRecommendationEdge)
+                .filter(
+                    BookRecommendationEdge.source_book_id == source_id,
+                    BookRecommendationEdge.target_book_id == target_id,
+                )
+                .first()
+            )
 
             if edge:
                 edge.mention_count += data["mention_count"]

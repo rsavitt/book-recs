@@ -1,6 +1,5 @@
 """Tests for similarity computation service."""
 
-
 import pytest
 
 from app.services.similarity import SimilarityComputer
@@ -17,9 +16,7 @@ class TestPearsonCorrelation:
 
         # Create a mock computer just to access the method
         computer = SimilarityComputer.__new__(SimilarityComputer)
-        correlation = computer._pearson_correlation(
-            user_ratings, neighbor_ratings, overlap
-        )
+        correlation = computer._pearson_correlation(user_ratings, neighbor_ratings, overlap)
 
         assert correlation == pytest.approx(1.0, abs=0.001)
 
@@ -30,9 +27,7 @@ class TestPearsonCorrelation:
         overlap = set(user_ratings.keys())
 
         computer = SimilarityComputer.__new__(SimilarityComputer)
-        correlation = computer._pearson_correlation(
-            user_ratings, neighbor_ratings, overlap
-        )
+        correlation = computer._pearson_correlation(user_ratings, neighbor_ratings, overlap)
 
         assert correlation == pytest.approx(-1.0, abs=0.001)
 
@@ -43,9 +38,7 @@ class TestPearsonCorrelation:
         overlap = set(user_ratings.keys())
 
         computer = SimilarityComputer.__new__(SimilarityComputer)
-        correlation = computer._pearson_correlation(
-            user_ratings, neighbor_ratings, overlap
-        )
+        correlation = computer._pearson_correlation(user_ratings, neighbor_ratings, overlap)
 
         # When one user has constant ratings, std dev is 0, correlation is undefined
         assert correlation is None
@@ -57,9 +50,7 @@ class TestPearsonCorrelation:
         overlap = {1, 2, 3}
 
         computer = SimilarityComputer.__new__(SimilarityComputer)
-        correlation = computer._pearson_correlation(
-            user_ratings, neighbor_ratings, overlap
-        )
+        correlation = computer._pearson_correlation(user_ratings, neighbor_ratings, overlap)
 
         assert correlation == pytest.approx(1.0, abs=0.001)
 

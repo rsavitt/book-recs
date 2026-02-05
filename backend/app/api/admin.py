@@ -35,6 +35,7 @@ router = APIRouter()
 
 # ============== Bulk Upload Models ==============
 
+
 class BulkBookData(BaseModel):
     title: str
     author: str
@@ -77,6 +78,7 @@ class BulkUploadResponse(BaseModel):
 
 # ============== Bulk Upload Endpoints ==============
 
+
 @router.post("/bulk/books", response_model=BulkUploadResponse)
 async def bulk_upload_books(
     books: list[BulkBookData] = Body(...),
@@ -97,30 +99,37 @@ async def bulk_upload_books(
             existing = None
 
             if book_data.goodreads_id:
-                existing = db.query(BookEdition).filter(
-                    BookEdition.goodreads_book_id == book_data.goodreads_id
-                ).first()
+                existing = (
+                    db.query(BookEdition)
+                    .filter(BookEdition.goodreads_book_id == book_data.goodreads_id)
+                    .first()
+                )
 
             if not existing and book_data.isbn_13:
                 existing = db.query(Book).filter(Book.isbn_13 == book_data.isbn_13).first()
 
             if not existing:
                 # Check by normalized title + author
-                author_norm = unicodedata.normalize('NFKD', book_data.author)
-                author_norm = ''.join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+                author_norm = unicodedata.normalize("NFKD", book_data.author)
+                author_norm = (
+                    "".join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+                )
 
-                existing = db.query(Book).filter(
-                    Book.title == book_data.title,
-                    Book.author_normalized == author_norm
-                ).first()
+                existing = (
+                    db.query(Book)
+                    .filter(Book.title == book_data.title, Book.author_normalized == author_norm)
+                    .first()
+                )
 
             if existing:
                 skipped += 1
                 continue
 
             # Create book
-            author_norm = unicodedata.normalize('NFKD', book_data.author)
-            author_norm = ''.join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+            author_norm = unicodedata.normalize("NFKD", book_data.author)
+            author_norm = (
+                "".join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+            )
 
             book = Book(
                 title=book_data.title[:500],
@@ -276,26 +285,39 @@ async def bulk_upload_ratings(
 
             # Get book ID
             book_id = None
-            cache_key = rating_data.goodreads_book_id or f"{rating_data.book_title}|{rating_data.book_author}"
+            cache_key = (
+                rating_data.goodreads_book_id
+                or f"{rating_data.book_title}|{rating_data.book_author}"
+            )
 
             if cache_key in book_cache:
                 book_id = book_cache[cache_key]
             else:
                 if rating_data.goodreads_book_id:
-                    edition = db.query(BookEdition).filter(
-                        BookEdition.goodreads_book_id == rating_data.goodreads_book_id
-                    ).first()
+                    edition = (
+                        db.query(BookEdition)
+                        .filter(BookEdition.goodreads_book_id == rating_data.goodreads_book_id)
+                        .first()
+                    )
                     if edition:
                         book_id = edition.book_id
 
                 if not book_id and rating_data.book_title and rating_data.book_author:
-                    author_norm = unicodedata.normalize('NFKD', rating_data.book_author)
-                    author_norm = ''.join(c for c in author_norm if not unicodedata.combining(c)).lower().strip()
+                    author_norm = unicodedata.normalize("NFKD", rating_data.book_author)
+                    author_norm = (
+                        "".join(c for c in author_norm if not unicodedata.combining(c))
+                        .lower()
+                        .strip()
+                    )
 
-                    book = db.query(Book).filter(
-                        Book.title == rating_data.book_title,
-                        Book.author_normalized == author_norm
-                    ).first()
+                    book = (
+                        db.query(Book)
+                        .filter(
+                            Book.title == rating_data.book_title,
+                            Book.author_normalized == author_norm,
+                        )
+                        .first()
+                    )
                     if book:
                         book_id = book.id
 
@@ -307,10 +329,11 @@ async def bulk_upload_ratings(
                 continue
 
             # Check for existing rating
-            existing = db.query(Rating).filter(
-                Rating.user_id == user_id,
-                Rating.book_id == book_id
-            ).first()
+            existing = (
+                db.query(Rating)
+                .filter(Rating.user_id == user_id, Rating.book_id == book_id)
+                .first()
+            )
             if existing:
                 skipped += 1
                 continue
@@ -342,6 +365,7 @@ async def bulk_upload_ratings(
 
 
 # ============== Stats & Classification ==============
+
 
 @router.get("/stats")
 async def get_stats(db: Session = Depends(get_db)):
@@ -507,8 +531,9 @@ READER_PERSONAS = [
 
 def _normalize_author(author: str) -> str:
     import unicodedata
-    normalized = unicodedata.normalize('NFKD', author)
-    normalized = ''.join(c for c in normalized if not unicodedata.combining(c))
+
+    normalized = unicodedata.normalize("NFKD", author)
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
     return normalized.lower().strip()
 
 
@@ -558,9 +583,7 @@ async def generate_sample_ratings(
     """
     if clear_existing:
         # Delete synthetic users and their ratings
-        synthetic_users = db.query(User).filter(
-            User.hashed_password == "SYNTHETIC_NO_LOGIN"
-        ).all()
+        synthetic_users = db.query(User).filter(User.hashed_password == "SYNTHETIC_NO_LOGIN").all()
         for user in synthetic_users:
             db.query(Rating).filter(Rating.user_id == user.id).delete()
             db.delete(user)
@@ -605,10 +628,7 @@ async def generate_sample_ratings(
                     continue
 
                 rating = Rating(
-                    user_id=user.id,
-                    book_id=book.id,
-                    rating=rating_value,
-                    source="synthetic"
+                    user_id=user.id, book_id=book.id, rating=rating_value, source="synthetic"
                 )
                 db.add(rating)
                 rating_count += 1
@@ -631,25 +651,55 @@ UCSD_URLS = {
 }
 
 ROMANTASY_AUTHORS = {
-    "sarah j. maas", "jennifer l. armentrout", "rebecca yarros",
-    "holly black", "carissa broadbent", "elise kova",
-    "kerri maniscalco", "raven kennedy", "scarlett st. clair",
-    "laura thalassa", "leigh bardugo", "kresley cole",
-    "ilona andrews", "nalini singh", "grace draven",
-    "ruby dixon", "jaymin eve", "leia stone", "j. bree",
-    "penelope douglas", "kathryn ann kingsley", "k.m. shea",
+    "sarah j. maas",
+    "jennifer l. armentrout",
+    "rebecca yarros",
+    "holly black",
+    "carissa broadbent",
+    "elise kova",
+    "kerri maniscalco",
+    "raven kennedy",
+    "scarlett st. clair",
+    "laura thalassa",
+    "leigh bardugo",
+    "kresley cole",
+    "ilona andrews",
+    "nalini singh",
+    "grace draven",
+    "ruby dixon",
+    "jaymin eve",
+    "leia stone",
+    "j. bree",
+    "penelope douglas",
+    "kathryn ann kingsley",
+    "k.m. shea",
 }
 
 ROMANTASY_KEYWORDS = [
-    "fae", "faerie", "dragon", "kingdom", "throne", "crown",
-    "witch", "magic", "curse", "court", "realm", "shadow",
-    "vampire", "wolf", "mate", "bond", "wings", "immortal",
+    "fae",
+    "faerie",
+    "dragon",
+    "kingdom",
+    "throne",
+    "crown",
+    "witch",
+    "magic",
+    "curse",
+    "court",
+    "realm",
+    "shadow",
+    "vampire",
+    "wolf",
+    "mate",
+    "bond",
+    "wings",
+    "immortal",
 ]
 
 
 def _ucsd_normalize_author(author: str) -> str:
-    normalized = unicodedata.normalize('NFKD', author)
-    normalized = ''.join(c for c in normalized if not unicodedata.combining(c))
+    normalized = unicodedata.normalize("NFKD", author)
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
     return normalized.lower().strip()
 
 
@@ -695,7 +745,7 @@ def _get_or_create_tag(db: Session, tag_name: str, category: str = "trope") -> B
             name=tag_name.replace("-", " ").title(),
             slug=slug,
             category=category,
-            is_romantasy_indicator=True
+            is_romantasy_indicator=True,
         )
         db.add(tag)
         db.flush()
@@ -705,6 +755,7 @@ def _get_or_create_tag(db: Session, tag_name: str, category: str = "trope") -> B
 def _import_ucsd_books(db: Session, book_limit: int = 2000) -> dict[str, int]:
     """Download and import books from UCSD dataset."""
     import logging
+
     logger = logging.getLogger(__name__)
 
     book_id_map = {}
@@ -715,12 +766,12 @@ def _import_ucsd_books(db: Session, book_limit: int = 2000) -> dict[str, int]:
     logger.info(f"Downloading {url}...")
 
     try:
-        with tempfile.NamedTemporaryFile(suffix='.json.gz', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".json.gz", delete=False) as tmp:
             urllib.request.urlretrieve(url, tmp.name)
             tmp_path = tmp.name
 
         logger.info("Processing books...")
-        with gzip.open(tmp_path, 'rt', encoding='utf-8') as f:
+        with gzip.open(tmp_path, "rt", encoding="utf-8") as f:
             for line in f:
                 if romantasy_count >= book_limit:
                     break
@@ -743,9 +794,11 @@ def _import_ucsd_books(db: Session, book_limit: int = 2000) -> dict[str, int]:
                     continue
 
                 # Check if already exists
-                existing = db.query(BookEdition).filter(
-                    BookEdition.goodreads_book_id == goodreads_id
-                ).first()
+                existing = (
+                    db.query(BookEdition)
+                    .filter(BookEdition.goodreads_book_id == goodreads_id)
+                    .first()
+                )
                 if existing:
                     book_id_map[goodreads_id] = existing.book_id
                     continue
@@ -761,7 +814,11 @@ def _import_ucsd_books(db: Session, book_limit: int = 2000) -> dict[str, int]:
                     description=(book_data.get("description") or "")[:5000] or None,
                     cover_url=book_data.get("image_url"),
                     page_count=int(book_data["num_pages"]) if book_data.get("num_pages") else None,
-                    publication_year=int(book_data["publication_year"]) if book_data.get("publication_year") else None,
+                    publication_year=(
+                        int(book_data["publication_year"])
+                        if book_data.get("publication_year")
+                        else None
+                    ),
                     is_romantasy=True,
                     romantasy_confidence=confidence,
                     isbn_13=book_data.get("isbn13", "")[:13] or None,
@@ -796,6 +853,7 @@ def _import_ucsd_books(db: Session, book_limit: int = 2000) -> dict[str, int]:
 def _import_ucsd_ratings(db: Session, book_id_map: dict[str, int], max_users: int = 5000):
     """Import ratings for imported books."""
     import logging
+
     logger = logging.getLogger(__name__)
 
     user_id_map = {}
@@ -806,12 +864,12 @@ def _import_ucsd_ratings(db: Session, book_id_map: dict[str, int], max_users: in
     logger.info(f"Downloading {url}...")
 
     try:
-        with tempfile.NamedTemporaryFile(suffix='.json.gz', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".json.gz", delete=False) as tmp:
             urllib.request.urlretrieve(url, tmp.name)
             tmp_path = tmp.name
 
         logger.info("Processing interactions...")
-        with gzip.open(tmp_path, 'rt', encoding='utf-8') as f:
+        with gzip.open(tmp_path, "rt", encoding="utf-8") as f:
             for line in f:
                 try:
                     interaction = json.loads(line)
@@ -855,10 +913,11 @@ def _import_ucsd_ratings(db: Session, book_id_map: dict[str, int], max_users: in
                 our_user_id = user_id_map[user_id]
 
                 # Check for existing rating
-                existing_rating = db.query(Rating).filter(
-                    Rating.user_id == our_user_id,
-                    Rating.book_id == our_book_id
-                ).first()
+                existing_rating = (
+                    db.query(Rating)
+                    .filter(Rating.user_id == our_user_id, Rating.book_id == our_book_id)
+                    .first()
+                )
                 if existing_rating:
                     continue
 
@@ -866,7 +925,7 @@ def _import_ucsd_ratings(db: Session, book_id_map: dict[str, int], max_users: in
                     user_id=our_user_id,
                     book_id=our_book_id,
                     rating=min(5, max(1, int(rating))),
-                    source="ucsd_goodreads"
+                    source="ucsd_goodreads",
                 )
                 db.add(rating_obj)
                 rating_count += 1
@@ -888,6 +947,7 @@ def _import_ucsd_ratings(db: Session, book_id_map: dict[str, int], max_users: in
 def _run_ucsd_import(db: Session, book_limit: int, max_users: int):
     """Background task to run the full UCSD import."""
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
