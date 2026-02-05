@@ -83,15 +83,21 @@ export function BookCard({ book, showExplanation = false, onFeedback }: BookCard
 
         {/* Feedback buttons */}
         {onFeedback && (
-          <div className="flex gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-3">
             <button
-              onClick={() => onFeedback("interested")}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFeedback("interested"); }}
               className="flex-1 py-1.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
             >
               Want to Read
             </button>
             <button
-              onClick={() => onFeedback("not_interested")}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFeedback("already_read"); }}
+              className="flex-1 py-1.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+            >
+              Already Read
+            </button>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFeedback("not_interested"); }}
               className="flex-1 py-1.5 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
             >
               Not Interested

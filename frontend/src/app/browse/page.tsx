@@ -22,6 +22,9 @@ export default function BrowsePage() {
   const [availableTropes, setAvailableTropes] = useState<BookTag[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Feedback tracking
+  const [feedbackMap, setFeedbackMap] = useState<Record<number, string>>({});
+
   // Pagination
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -106,6 +109,19 @@ export default function BrowsePage() {
     setSpiceFilter("any");
     setAgeFilter("any");
     setSelectedTropes([]);
+  };
+
+  const handleFeedback = async (
+    bookId: number,
+    feedback: "interested" | "not_interested" | "already_read"
+  ) => {
+    if (!isLoggedIn) return;
+    try {
+      await api.submitFeedback(bookId, feedback);
+      setFeedbackMap((prev) => ({ ...prev, [bookId]: feedback }));
+    } catch {
+      // Silent fail
+    }
   };
 
   const hasActiveFilters =
@@ -292,7 +308,21 @@ export default function BrowsePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {books.map((book) => (
                 <Link key={book.id} href={`/book/${book.id}`}>
-                  <BookCard book={book} />
+                  {feedbackMap[book.id] ? (
+                    <div className="relative">
+                      <BookCard book={book} />
+                      <div className="absolute top-2 right-2 px-2 py-1 bg-green-600 text-white text-xs rounded-full">
+                        {feedbackMap[book.id] === "interested" && "Want to Read"}
+                        {feedbackMap[book.id] === "already_read" && "Already Read"}
+                        {feedbackMap[book.id] === "not_interested" && "Not Interested"}
+                      </div>
+                    </div>
+                  ) : (
+                    <BookCard
+                      book={book}
+                      onFeedback={isLoggedIn ? (feedback) => handleFeedback(book.id, feedback) : undefined}
+                    />
+                  )}
                 </Link>
               ))}
             </div>
