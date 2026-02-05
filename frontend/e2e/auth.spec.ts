@@ -59,7 +59,7 @@ test.describe("Authentication", () => {
     test("should have link to registration", async ({ page }) => {
       await page.goto("/login");
 
-      await page.getByText("Create an account").click();
+      await page.getByText("create a new account").click();
 
       await expect(page).toHaveURL("/register");
     });

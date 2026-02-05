@@ -30,7 +30,7 @@ test.describe("Browse Page", () => {
     await page.goto("/browse");
     await page.getByRole("button", { name: /Filters/i }).click();
 
-    await expect(page.getByRole("button", { name: "Any" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Any" }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "None" })).toBeVisible();
   });
 

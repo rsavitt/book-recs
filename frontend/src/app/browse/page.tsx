@@ -320,7 +320,7 @@ export default function BrowsePage() {
         )}
 
         {/* Sign up CTA for non-logged-in users */}
-        {!isLoggedIn && books.length > 0 && (
+        {!isLoggedIn && !loading && (
           <div className="mt-12 bg-purple-50 rounded-xl p-8 text-center">
             <h2 className="text-xl font-bold text-gray-900 mb-2">
               Want Personalized Recommendations?

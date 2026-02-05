@@ -5,7 +5,7 @@ test.describe("Landing Page", () => {
     await page.goto("/");
 
     await expect(page.getByText("Find Your Next Favorite")).toBeVisible();
-    await expect(page.getByText("Romantasy")).toBeVisible();
+    await expect(page.locator("h1").getByText("Romantasy")).toBeVisible();
   });
 
   test("should display navigation", async ({ page }) => {
@@ -13,14 +13,18 @@ test.describe("Landing Page", () => {
 
     await expect(page.getByText("Romantasy Recs")).toBeVisible();
     await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Get Started" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Get Started", exact: true }),
+    ).toBeVisible();
   });
 
   test("should display how it works section", async ({ page }) => {
     await page.goto("/");
 
     await expect(page.getByText("How It Works")).toBeVisible();
-    await expect(page.getByText("Import Your Library")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Import Your Library/ }),
+    ).toBeVisible();
     await expect(page.getByText("Find Your People")).toBeVisible();
     await expect(page.getByText("Get Recommendations")).toBeVisible();
   });
